@@ -1,0 +1,5 @@
+{"kind":"run_start","t":"2026-05-15T13:24:33.822Z","runId":"2026-05-15T13-24-33-822Z-security-team","teamId":"user:c:\\users\\shess\\.claude\\teams\\security-team.json","teamName":"security-team","protocol":"native-task","runtime":"native","phase":"none"}
+{"kind":"agent_start","t":"2026-05-15T13:24:33.823Z","runId":"2026-05-15T13-24-33-822Z-security-team","agent":"main","turn":1,"phase":"none"}
+{"kind":"error","t":"2026-05-15T13:24:34.311Z","runId":"2026-05-15T13-24-33-822Z-security-team","agent":"orchestrator","message":"claude exited with code 1: error: unknown option '--allowed-agents'\n"}
+{"kind":"agent_end","t":"2026-05-15T13:24:34.312Z","runId":"2026-05-15T13-24-33-822Z-security-team","agent":"main","turn":1,"status":"error","durationMs":0}
+{"kind":"run_end","t":"2026-05-15T13:24:34.313Z","runId":"2026-05-15T13-24-33-822Z-security-team","status":"error","totals":{"inputTokens":0,"outputTokens":0,"costUsd":0}}

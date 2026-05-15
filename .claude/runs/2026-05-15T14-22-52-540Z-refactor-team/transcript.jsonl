@@ -1,0 +1,5 @@
+{"kind":"run_start","t":"2026-05-15T14:22:52.540Z","runId":"2026-05-15T14-22-52-540Z-refactor-team","teamId":"user:c:\\users\\shess\\.claude\\teams\\refactor-team.json","teamName":"refactor-team","protocol":"native-task","runtime":"native","phase":"none"}
+{"kind":"agent_start","t":"2026-05-15T14:22:52.541Z","runId":"2026-05-15T14-22-52-540Z-refactor-team","agent":"main","turn":1,"phase":"none"}
+{"kind":"error","t":"2026-05-15T14:22:53.015Z","runId":"2026-05-15T14-22-52-540Z-refactor-team","agent":"orchestrator","message":"claude exited with code 1: error: unknown option '--allowed-agents'\n"}
+{"kind":"agent_end","t":"2026-05-15T14:22:53.016Z","runId":"2026-05-15T14-22-52-540Z-refactor-team","agent":"main","turn":1,"status":"error","durationMs":0}
+{"kind":"run_end","t":"2026-05-15T14:22:53.017Z","runId":"2026-05-15T14-22-52-540Z-refactor-team","status":"error","totals":{"inputTokens":0,"outputTokens":0,"costUsd":0}}
