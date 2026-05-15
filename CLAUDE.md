@@ -28,11 +28,12 @@ Do not delete these files; evolve them as the project changes.
 
 
 
+
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (Cloude Code ToolBox)
 
-_Last synced: 2026-05-14T22:07:44.620Z._
+_Last synced: 2026-05-15T01:06:02.913Z._
 
 - **Full report:** `.claude/cloude-code-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools** in Claude Code, enable the matching server via `/mcp`. Servers are configured in `~/.claude.json` (user) and `.mcp.json` (project).
@@ -63,7 +64,7 @@ _Off (Toolbox stash):_
 
 #### Project skills
 
-- **network-engineer** — `d:\Users\Sander\repos\unifi-ai\.github\skills\network-engineer` — Describe when this skill applies (project-specific workflow).
+_None found (or no workspace open)._
 
 #### User skills
 
