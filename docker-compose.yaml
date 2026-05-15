@@ -3,7 +3,7 @@ services:
     build: 
      context: ./app
      dockerfile: Dockerfile.prod
-    image: ghcr.io/shesselink81/unifi-monitor:${VERSION:-latest}
+    #image: ghcr.io/shesselink81/unifi-monitor:${VERSION:-latest}
     user: "1000:1000"
     ports:
       - "127.0.0.1:4000:4000"
