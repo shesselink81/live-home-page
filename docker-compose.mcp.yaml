@@ -1,0 +1,26 @@
+services:
+  unifi-mcp-cloud:
+    image: ghcr.io/enuno/unifi-mcp-server:latest
+    environment:
+      UNIFI_API_KEY: ${UNIFI_CLOUD_API_KEY}
+      UNIFI_API_TYPE: cloud-v1
+      UNIFI_CLOUD_API_URL: https://api.ui.com
+      UNIFI_DEFAULT_SITE: "default"
+      UNIFI_SITE_MANAGER_ENABLED: "true"
+      MCP_SERVER_TRANSPORT: sse
+      MCP_SERVER_PORT: 3000
+    ports:
+      - "3000:3000"
+
+  unifi-mcp-local:
+    image: ghcr.io/enuno/unifi-mcp-server:latest
+    environment:
+      UNIFI_API_KEY: ${UNIFI_LOCAL_API_KEY}
+      UNIFI_API_TYPE: local
+      UNIFI_LOCAL_HOST: 192.168.178.1
+      UNIFI_LOCAL_VERIFY_SSL: "false"
+      UNIFI_DEFAULT_SITE: "default"
+      MCP_SERVER_TRANSPORT: sse
+      MCP_SERVER_PORT: 3001
+    ports:
+      - "3001:3001"

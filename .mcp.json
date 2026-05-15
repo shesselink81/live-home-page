@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "unifi-cloud": {
+      "url": "http://localhost:3000/sse"
+    },
+    "unifi-local": {
+      "url": "http://localhost:3001/sse"
+    }
+  }
+}

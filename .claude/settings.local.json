@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:4000/api/devices)",
+      "Bash(grep -o '^\\\\[.\\\\|,{\"')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/)",
+      "Skill(review-team)",
+      "Skill(review-team:*)",
+      "Bash(Get-ChildItem -Path \"d:\\\\Users\\\\Sander\\\\repos\\\\unifi-ai\\\\app\" -Recurse -Include \"middleware.ts\",\"middleware.js\",\"next.config.*\",\".env*\",\"next.config.ts\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object FullName)"
+    ]
+  }
+}

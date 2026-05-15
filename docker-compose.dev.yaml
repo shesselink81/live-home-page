@@ -1,0 +1,19 @@
+services:
+  monitor:
+    build: ./app
+    image: ghcr.io/shesselink81/unifi-monitor:${VERSION}-dev
+    ports:
+      - "127.0.0.1:4000:4000"
+    environment:
+      UNIFI_LOCAL_URL: https://${UNIFI_LOCAL_IP}/proxy/network
+      UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
+      UNIFI_CLOUD_URL: https://api.ui.com
+      UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
+    volumes:
+      - ./app/src:/app/src
+      - ./app/public:/app/public
+    develop:
+      watch:
+        - action: sync
+          path: ./app/src
+          target: /app/src
