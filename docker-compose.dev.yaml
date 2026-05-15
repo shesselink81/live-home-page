@@ -1,7 +1,7 @@
 services:
   monitor:
     build: ./app
-    image: ghcr.io/shesselink81/unifi-monitor:${VERSION}-dev
+    image: ghcr.io/shesselink81/unifi-monitor:v${VERSION}-dev
     ports:
       - "127.0.0.1:4000:4000"
     environment:

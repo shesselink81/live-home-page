@@ -5,10 +5,9 @@ on:
       - 'v*'   # Trigger op tags zoals v1.0.0, v2.3.1 etc.
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  VERSION: ${{ github.ref_name }}
 
 jobs:
   build:
