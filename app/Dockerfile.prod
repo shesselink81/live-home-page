@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install && chown -R node:node /app
 COPY --chown=node:node . .
-RUN npm run build
+RUN npm run build && mkdir -p /app/public
 
 FROM node:26-alpine AS runner
 WORKDIR /app
