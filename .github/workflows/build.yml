@@ -1,9 +1,10 @@
 name: Build and push image
 
 on:
-  release:
+  workflow_run:
+    workflows: [Create release]
     types:
-      - created
+      - completed
 
 jobs:
   build:
