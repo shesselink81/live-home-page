@@ -1,5 +1,5 @@
 {
-    "cloude-code-toolbox.thinkingMachineMode.enabled": true,
+    "cloude-code-toolbox.thinkingMachineMode.enabled": false,
     "cloude-code-toolbox.thinkingMachineMode.runAwarenessScan": true,
     "cloude-code-toolbox.thinkingMachineMode.mergeAwarenessIntoClaudeMd": true,
     "cloude-code-toolbox.thinkingMachineMode.showConfirmationModal": true,

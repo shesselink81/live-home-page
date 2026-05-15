@@ -5,6 +5,7 @@ export async function GET() {
   try {
     return NextResponse.json(await getClients())
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    void e
+    return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
   }
 }

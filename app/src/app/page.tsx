@@ -6,6 +6,7 @@ import WanHealthCard from '@/components/WanHealthCard'
 import DeviceCard from '@/components/DeviceCard'
 import ClientsTable from '@/components/ClientsTable'
 import IspCharts from '@/components/IspCharts'
+import GatewayCharts from '@/components/GatewayCharts'
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -63,6 +64,11 @@ export default function Dashboard() {
       {/* ISP Charts */}
       <div className="mt-6">
         <IspCharts />
+      </div>
+
+      {/* Gateway Charts */}
+      <div className="mt-6">
+        <GatewayCharts />
       </div>
     </div>
   )

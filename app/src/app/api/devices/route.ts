@@ -8,6 +8,7 @@ export async function GET() {
     const all = await getDevices()
     return NextResponse.json(all.filter((d) => DEVICE_TYPES.has(d.type)))
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    void e
+    return NextResponse.json({ error: 'Failed to fetch devices' }, { status: 500 })
   }
 }

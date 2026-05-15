@@ -6,6 +6,11 @@ export interface HistoryPoint {
   packetLoss: boolean
   highLatency: boolean
   wanDowntime: boolean
+  // gateway device metrics (null when no gateway found)
+  wanTxBytes: number | null
+  wanRxBytes: number | null
+  gatewayCpu: number | null
+  gatewayMem: number | null
 }
 
 const MAX_POINTS = 720 // ~2 hours at 10 s polling interval

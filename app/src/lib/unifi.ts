@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import https from 'node:https'
 
 const LOCAL_BASE = process.env.UNIFI_LOCAL_URL ?? 'https://192.168.178.1/proxy/network'
@@ -5,9 +6,10 @@ const LOCAL_KEY = process.env.UNIFI_LOCAL_API_KEY ?? ''
 const CLOUD_BASE = process.env.UNIFI_CLOUD_URL ?? 'https://api.ui.com'
 const CLOUD_KEY = process.env.UNIFI_CLOUD_API_KEY ?? ''
 
-// Scoped agent — bypasses TLS verification only for the self-signed UniFi controller cert.
-// Does NOT affect any other outbound HTTPS calls in this process.
-const localAgent = new https.Agent({ rejectUnauthorized: false })
+// Set UNIFI_LOCAL_CA to the path of your controller's CA cert (PEM) for proper TLS verification.
+// Without it, verification is disabled — acceptable on a private LAN but not ideal.
+const localCa = process.env.UNIFI_LOCAL_CA ? fs.readFileSync(process.env.UNIFI_LOCAL_CA) : undefined
+const localAgent = new https.Agent(localCa ? { ca: localCa } : { rejectUnauthorized: false })
 
 function localRequest(path: string): Promise<unknown[]> {
   return new Promise((resolve, reject) => {
@@ -60,6 +62,8 @@ export interface Device {
   tx_bytes: number
   rx_bytes: number
   bytes: number
+  cpu: number | null
+  mem: number | null
 }
 
 export interface Client {
@@ -99,12 +103,63 @@ export interface WanHealth {
   issues: Array<{ highLatency?: boolean; packetLoss?: boolean; wanDowntime?: boolean }>
 }
 
+function mapDevice(r: Record<string, unknown>): Device {
+  const sys = r['sys_stats'] as { cpu?: number; mem?: number } | undefined
+  return {
+    mac: r.mac as string,
+    name: r.name as string,
+    model: r.model as string,
+    type: r.type as string,
+    ip: r.ip as string,
+    state: r.state as number,
+    version: r.version as string,
+    uptime: r.uptime as number,
+    tx_bytes: r.tx_bytes as number,
+    rx_bytes: r.rx_bytes as number,
+    bytes: r.bytes as number,
+    cpu: typeof sys?.cpu === 'number' ? sys.cpu : null,
+    mem: typeof sys?.mem === 'number' ? sys.mem : null,
+  }
+}
+
+function mapClient(r: Record<string, unknown>): Client {
+  return {
+    mac: r.mac as string,
+    ip: r.ip as string,
+    name: (r.name ?? null) as string | null,
+    hostname: r.hostname as string,
+    is_wired: r.is_wired as boolean,
+    is_guest: r.is_guest as boolean,
+    network: r.network as string,
+    vlan: r.vlan as number,
+    signal: (r.signal ?? null) as number | null,
+    uptime: r.uptime as number,
+    tx_bytes: (r.tx_bytes ?? null) as number | null,
+    rx_bytes: (r.rx_bytes ?? null) as number | null,
+    tx_rate: (r.tx_rate ?? null) as number | null,
+    rx_rate: (r.rx_rate ?? null) as number | null,
+    essid: (r.essid ?? null) as string | null,
+    oui: (r.oui ?? '') as string,
+    ap_mac: (r.ap_mac ?? null) as string | null,
+    sw_mac: (r.sw_mac ?? null) as string | null,
+  }
+}
+
+const GATEWAY_TYPES = new Set(['udm', 'ugw', 'uxg'])
+
 export async function getDevices(): Promise<Device[]> {
-  return localGet('/api/s/default/stat/device') as Promise<Device[]>
+  const raw = await localGet('/api/s/default/stat/device') as Record<string, unknown>[]
+  return raw.map(mapDevice)
+}
+
+export async function getGateway(): Promise<Device | null> {
+  const devices = await getDevices()
+  return devices.find((d) => GATEWAY_TYPES.has(d.type)) ?? null
 }
 
 export async function getClients(): Promise<Client[]> {
-  return localGet('/api/s/default/stat/sta') as Promise<Client[]>
+  const raw = await localGet('/api/s/default/stat/sta') as Record<string, unknown>[]
+  return raw.map(mapClient)
 }
 
 interface LocalHealthEntry {
