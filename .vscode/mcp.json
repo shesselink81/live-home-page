@@ -1,10 +1,19 @@
 {
   "mcpServers": {
-    "unifi-local": {
-      "url": "http://localhost:3001/sse"
+    "unifi Local": {
+      "command": "unifi-mcp-server",
+      "env": {
+        "UNIFI_API_KEY": "${UNIFI_LOCAL_API_KEY}",
+        "UNIFI_API_TYPE": "local",
+        "UNIFI_LOCAL_HOST": "${UNIFI_LOCAL_IP}"
+      }
     },
-    "unifi-cloud": {
-      "url": "http://localhost:3000/sse"
+    "unifi Cloud": {
+      "command": "unifi-mcp-server",
+      "env": {
+        "UNIFI_API_KEY": "${UNIFI_CLOUD_API_KEY}",
+        "UNIFI_API_TYPE": "cloud-v1"
+      }
     }
   }
 }

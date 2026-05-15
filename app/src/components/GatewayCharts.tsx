@@ -90,7 +90,7 @@ export default function GatewayCharts() {
                   contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
                   labelStyle={{ color: '#9ca3af', fontSize: 11 }}
                   itemStyle={{ fontSize: 12 }}
-                  formatter={(v: number) => [`${v} Mbps`]}
+                  formatter={(v) => [`${v} Mbps`] as [string]}
                 />
                 <Legend wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
                 <Line type="monotone" dataKey="txMbps" name="Upload" stroke="#34d399" dot={false} strokeWidth={1.5} connectNulls />
@@ -112,7 +112,7 @@ export default function GatewayCharts() {
                     contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
                     labelStyle={{ color: '#9ca3af', fontSize: 11 }}
                     itemStyle={{ fontSize: 12 }}
-                    formatter={(v: number) => [`${v}%`]}
+                    formatter={(v) => [`${v}%`] as [string]}
                   />
                   <Legend wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
                   <Line type="monotone" dataKey="cpu" name="CPU" stroke="#f97316" dot={false} strokeWidth={1.5} connectNulls />
