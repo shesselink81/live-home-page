@@ -1,6 +1,8 @@
 services:
   monitor:
-    build: ./app
+    build: 
+     context: ./app
+     dockerfile: Dockerfile.dev
     image: ghcr.io/shesselink81/unifi-ai:v${VERSION}-dev
     ports:
       - "127.0.0.1:4000:4000"
