@@ -9,7 +9,10 @@
       "PowerShell($env:UNIFI_LOCAL_HOST)",
       "PowerShell([System.Environment]::GetEnvironmentVariable\\(\"UNIFI_LOCAL_HOST\", \"User\"\\); [System.Environment]::GetEnvironmentVariable\\(\"UNIFI_LOCAL_HOST\", \"Machine\"\\))",
       "PowerShell($env:UNIFI_LOCAL_API_KEY; $env:UNIFI_CLOUD_API_KEY)",
-      "PowerShell($env:UNIFI_CLOUD_API_KEY)"
+      "PowerShell($env:UNIFI_CLOUD_API_KEY)",
+      "mcp__unifi_Local__list_devices_by_type",
+      "mcp__unifi_Local__get_device_details",
+      "mcp__unifi_Local__get_device_by_mac"
     ]
   },
   "enabledMcpjsonServers": [

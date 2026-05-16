@@ -28,7 +28,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">UniFi Monitor</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Refreshes every 10 s · Last update: {now}</p>
+          <p className="text-gray-500 text-sm mt-0.5" suppressHydrationWarning>Refreshes every 10 s · Last update: {now}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
