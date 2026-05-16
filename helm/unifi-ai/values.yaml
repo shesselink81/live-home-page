@@ -5,6 +5,8 @@ image:
   tag: ""  # defaults to Chart.appVersion
   pullPolicy: IfNotPresent
 
+imagePullSecrets: []
+
 # UniFi connection settings
 unifi:
   # Local controller IP or hostname (required)
