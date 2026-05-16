@@ -104,7 +104,7 @@ export interface WanHealth {
 }
 
 function mapDevice(r: Record<string, unknown>): Device {
-  const sys = r['sys_stats'] as { cpu?: number; mem?: number } | undefined
+  const sys = r['system-stats'] as { cpu?: string; mem?: string } | undefined
   return {
     mac: r.mac as string,
     name: r.name as string,
@@ -117,8 +117,8 @@ function mapDevice(r: Record<string, unknown>): Device {
     tx_bytes: r.tx_bytes as number,
     rx_bytes: r.rx_bytes as number,
     bytes: r.bytes as number,
-    cpu: typeof sys?.cpu === 'number' ? sys.cpu : null,
-    mem: typeof sys?.mem === 'number' ? sys.mem : null,
+    cpu: sys?.cpu != null ? parseFloat(sys.cpu) : null,
+    mem: sys?.mem != null ? parseFloat(sys.mem) : null,
   }
 }
 

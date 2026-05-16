@@ -32,6 +32,13 @@ export default function DeviceCard({ device }: Props) {
         <Row label="TX" value={formatBytes(device.tx_bytes)} />
         <Row label="RX" value={formatBytes(device.rx_bytes)} />
       </div>
+
+      {(device.cpu !== null || device.mem !== null) && (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {device.cpu !== null && <UsageBar label="CPU" pct={device.cpu} />}
+          {device.mem !== null && <UsageBar label="MEM" pct={device.mem} />}
+        </div>
+      )}
     </div>
   )
 }
@@ -41,6 +48,21 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
     <div>
       <p className="text-gray-500 text-xs">{label}</p>
       <p className={`text-gray-200 text-xs truncate ${mono ? 'font-mono' : ''}`}>{value}</p>
+    </div>
+  )
+}
+
+function UsageBar({ label, pct }: { label: string; pct: number }) {
+  const color = pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-blue-500'
+  return (
+    <div>
+      <div className="flex justify-between mb-1">
+        <span className="text-gray-500 text-xs">{label}</span>
+        <span className="text-gray-300 text-xs font-mono">{Math.round(pct)}%</span>
+      </div>
+      <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+      </div>
     </div>
   )
 }
