@@ -1,0 +1,68 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/shesselink81/unifi-ai
+  tag: ""  # defaults to Chart.appVersion
+  pullPolicy: IfNotPresent
+
+# UniFi connection settings
+unifi:
+  # Local controller IP or hostname (required)
+  localIp: "192.168.1.1"
+  # Override full local URL (optional; constructed from localIp when empty)
+  localUrl: ""
+  # Cloud API base URL (optional)
+  cloudUrl: "https://api.ui.com"
+
+  # API keys — stored in a Secret created by this chart.
+  # Set existingSecret to use a pre-existing Secret instead (keys: local-api-key, cloud-api-key).
+  localApiKey: ""
+  cloudApiKey: ""
+  existingSecret: ""
+
+  # Optional bearer token for /api/* routes (leave empty to disable)
+  dashboardToken: ""
+
+service:
+  type: ClusterIP
+  port: 4000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: unifi-ai.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Gateway API HTTPRoute (gateway.networking.k8s.io/v1)
+httpRoute:
+  enabled: false
+  parentRefs:
+    - name: ""          # name of the Gateway resource (required)
+      namespace: ""     # namespace of the Gateway (optional, defaults to same namespace)
+      sectionName: ""   # listener name on the Gateway e.g. "https" (optional)
+  hostnames: []
+  # - unifi.example.com
+
+resources: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
