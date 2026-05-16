@@ -1,4 +1,17 @@
 {
+  "permissions": {
+    "allow": [
+      "PowerShell($env:UNIFI_LOCAL_IP; $env:UNIFI_LOCAL_API_KEY)",
+      "PowerShell($env:UNIFI_LOCAL_IP)",
+      "PowerShell($env:UNIFI_LOCAL_API_KEY)",
+      "PowerShell($PROFILE)",
+      "mcp__unifi_Local__list_firewall_policies",
+      "PowerShell($env:UNIFI_LOCAL_HOST)",
+      "PowerShell([System.Environment]::GetEnvironmentVariable\\(\"UNIFI_LOCAL_HOST\", \"User\"\\); [System.Environment]::GetEnvironmentVariable\\(\"UNIFI_LOCAL_HOST\", \"Machine\"\\))",
+      "PowerShell($env:UNIFI_LOCAL_API_KEY; $env:UNIFI_CLOUD_API_KEY)",
+      "PowerShell($env:UNIFI_CLOUD_API_KEY)"
+    ]
+  },
   "enabledMcpjsonServers": [
     "unifi-cloud",
     "unifi-local",
