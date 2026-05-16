@@ -1,6 +1,6 @@
 # Cloude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-05-16T03:20:33.241Z_
+_Generated: 2026-05-16T08:34:51.184Z_
 
 ## How to use this report
 
@@ -28,16 +28,16 @@ Workspace `mcp.json` _(folder: unifi-ai)_
 
 | Server id | Kind | Detail |
 |-----------|------|--------|
-| context7 | http | https://mcp.context7.com/mcp |
+| azure/aks-mcp | stdio | docker run -i --rm ghcr.io/azure/aks-mcp:latest --transport stdio |
 
 _User servers **off** (Toolbox stash):_
 
 | Server id | Kind | Detail |
 |-----------|------|--------|
-| io.github.upstash/context7 | stdio | npx @upstash/context7-mcp@1.0.31 |
-| azure/aks-mcp | stdio | docker run -i --rm ghcr.io/azure/aks-mcp:latest --transport stdio |
-| io.github.hashicorp/terraform-mcp-server | stdio | docker run -i --rm run --rm -i -e ${input:e} TFE_ADDRESS -e ${input:e} TFE_TOKEN -e ${input:e} ENABLE_TF_OPERATIONS hashicorp/terraform-mcp-server:0.3.3 -e TFE_ADDRESS -e TFE_TOKEN -e ENABLE_TF_OPERATIONS docker.io/hashicorp/terraform-mcp-server:0.3.3 |
 | MCP_DOCKER | stdio | docker mcp gateway run --profile ai_coding |
+| io.github.hashicorp/terraform-mcp-server | stdio | docker run -i --rm run --rm -i -e ${input:e} TFE_ADDRESS -e ${input:e} TFE_TOKEN -e ${input:e} ENABLE_TF_OPERATIONS hashicorp/terraform-mcp-server:0.3.3 -e TFE_ADDRESS -e TFE_TOKEN -e ENABLE_TF_OPERATIONS docker.io/hashicorp/terraform-mcp-server:0.3.3 |
+| io.github.upstash/context7 | stdio | npx @upstash/context7-mcp@1.0.31 |
+| context7 | http | https://mcp.context7.com/mcp |
 
 ## Skills (local `SKILL.md` folders)
 
