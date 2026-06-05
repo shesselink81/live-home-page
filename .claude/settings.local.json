@@ -12,7 +12,10 @@
       "PowerShell($env:UNIFI_CLOUD_API_KEY)",
       "mcp__unifi_Local__list_devices_by_type",
       "mcp__unifi_Local__get_device_details",
-      "mcp__unifi_Local__get_device_by_mac"
+      "mcp__unifi_Local__get_device_by_mac",
+      "Bash(curl *)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
     ]
   },
   "enabledMcpjsonServers": [
