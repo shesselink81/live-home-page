@@ -15,7 +15,22 @@
       "mcp__unifi_Local__get_device_by_mac",
       "Bash(curl *)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "mcp__unifi_Local__get_site_health_summary",
+      "mcp__unifi_Local__get_internet_health",
+      "mcp__unifi_Local__list_sites",
+      "mcp__unifi_Local__get_isp_metrics",
+      "mcp__unifi_Local__list_wan_connections",
+      "mcp__unifi_Local__get_device_statistics",
+      "mcp__unifi_Local__get_network_topology",
+      "mcp__unifi_Local__get_site_details",
+      "mcp__unifi_Local__list_vpn_tunnels",
+      "mcp__unifi_Local__list_port_forwards",
+      "mcp__unifi_Local__list_traffic_routes",
+      "Bash(powershell *)",
+      "mcp__unifi_Local__get_dns_filter_settings",
+      "mcp__unifi_Local__update_firewall_policy",
+      "Bash(git *)"
     ]
   },
   "enabledMcpjsonServers": [
