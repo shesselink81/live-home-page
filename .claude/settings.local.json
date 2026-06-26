@@ -30,7 +30,12 @@
       "Bash(powershell *)",
       "mcp__unifi_Local__get_dns_filter_settings",
       "mcp__unifi_Local__update_firewall_policy",
-      "Bash(git *)"
+      "Bash(git *)",
+      "mcp__unifi_Local__list_site_to_site_vpns",
+      "mcp__unifi_Local__list_vpn_servers",
+      "mcp__unifi_Local__get_site_to_site_vpn",
+      "mcp__unifi_Local__list_firewall_zones",
+      "mcp__unifi_Local__list_firewall_zones_v2"
     ]
   },
   "enabledMcpjsonServers": [
