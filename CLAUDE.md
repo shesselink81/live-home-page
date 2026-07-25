@@ -83,11 +83,14 @@ Use `/mcp` in Claude Code to access these tools once the MCP containers are runn
 
 
 
+
+
+
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (Cloude Code ToolBox)
 
-_Last synced: 2026-06-26T03:05:51.701Z._
+_Last synced: 2026-07-25T22:25:26.987Z._
 
 - **Full report:** `.claude/cloude-code-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools** in Claude Code, enable the matching server via `/mcp`. Servers are configured in `~/.claude.json` (user) and `.mcp.json` (project).
@@ -112,10 +115,10 @@ _Last synced: 2026-06-26T03:05:51.701Z._
 | azure/aks-mcp | stdio | docker run -i --rm -v C:/Users/shess/.azure:/root/.azure ghcr.io/azure/aks-mcp:latest --transport stdio |
 | context7 | http | https://mcp.context7.com/mcp |
 | io.github.upstash/context7 | stdio | npx @upstash/context7-mcp@1.0.31 |
+| MCP_DOCKER | stdio | docker mcp gateway run --profile ai_coding |
 
 _Off (Toolbox stash):_ 
 
-- **MCP_DOCKER** (stdio)
 - **io.github.hashicorp/terraform-mcp-server** (stdio)
 
 #### Project skills
