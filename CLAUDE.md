@@ -86,11 +86,12 @@ Use `/mcp` in Claude Code to access these tools once the MCP containers are runn
 
 
 
+
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (Cloude Code ToolBox)
 
-_Last synced: 2026-07-25T22:25:26.987Z._
+_Last synced: 2026-07-26T05:43:04.933Z._
 
 - **Full report:** `.claude/cloude-code-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools** in Claude Code, enable the matching server via `/mcp`. Servers are configured in `~/.claude.json` (user) and `.mcp.json` (project).
@@ -99,12 +100,9 @@ _Last synced: 2026-07-25T22:25:26.987Z._
 
 #### Workspace MCP
 
-- `d:\Users\Sander\repos\unifi-ai\.mcp.json` _(workspace: unifi-ai)_ — _servers defined_
+- `d:\Users\Sander\repos\unifi-ai\.mcp.json` _(workspace: unifi-ai)_ — _file missing_
 
-| Server id | Kind | Detail |
-|-----------|------|--------|
-| unifi Local | stdio | unifi-mcp-server |
-| unifi Cloud | stdio | unifi-mcp-server |
+_No active workspace servers in mcp.json._
 
 #### User MCP
 
@@ -130,6 +128,7 @@ _None found (or no workspace open)._
 _None found._
 
 <!-- cloude-code-toolbox:mcp-skills-awareness-end -->
+
 <!-- claude-code-memory-bank:begin -->
 # Memory bank (persistent context)
 
