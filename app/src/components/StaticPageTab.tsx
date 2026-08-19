@@ -1,7 +1,5 @@
 interface Props {
   title: string
-  sourceUrl: string
-  lastModified: string
   html: string
 }
 
@@ -21,18 +19,10 @@ const PROSE_CLASSES = [
   '[&_figure]:overflow-x-auto [&_figure]:mb-4',
 ].join(' ')
 
-export default function StaticPageTab({ title, sourceUrl, lastModified, html }: Props) {
+export default function StaticPageTab({ title, html }: Props) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-xs text-gray-500 uppercase tracking-widest">{title}</p>
-        <span className="text-xs text-gray-600">
-          Static export · {new Date(lastModified).toLocaleDateString()} ·{' '}
-          <a href={sourceUrl} target="_blank" rel="noopener" className="text-blue-400 hover:underline">
-            source
-          </a>
-        </span>
-      </div>
+      <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">{title}</p>
       <div className={PROSE_CLASSES} dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   )

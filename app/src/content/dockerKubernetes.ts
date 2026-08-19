@@ -1,13 +1,12 @@
 // Static export of a WordPress page (source is marked private on WordPress; this
 // snapshot is intentionally committed to this public repo).
 export const title = 'Web Apps, Docker & Kubernetes'
-export const sourceUrl = 'https://playlists.hesselink.me/web-apps-docker-kubernetes/'
-export const lastModified = '2026-08-19T15:19:39'
-
+export const sourceUrl = ''
+export const lastModified = ''
 export const html = `
 <h2 class="wp-block-heading">Overview</h2>
 
-<p>Reference page for the self-hosted web apps running on the home lab, and the Docker / Kubernetes infrastructure that runs them. See also <a href="https://playlists.hesselink.me/home-network-overview/">Home Network Overview</a> for the surrounding network layout.</p>
+<p>Reference page for the self-hosted web apps running on the home lab, and the Docker / Kubernetes infrastructure that runs them.</p>
 
 <h2 class="wp-block-heading">Self-Hosted Web Apps</h2>
 

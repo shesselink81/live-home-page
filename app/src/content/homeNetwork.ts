@@ -1,8 +1,8 @@
 // Static export of a WordPress page (source is marked private on WordPress; this
 // snapshot is intentionally committed to this public repo).
 export const title = 'Home Network Overview'
-export const sourceUrl = 'https://playlists.hesselink.me/home-network-overview/'
-export const lastModified = '2026-08-19T14:45:58'
+export const sourceUrl = ''
+export const lastModified = ''
 
 export const html = `
 <h2 class="wp-block-heading">Overview</h2>
@@ -15,7 +15,7 @@ export const html = `
 
 <li><strong>Site:</strong> Default</li>
 
-<li><strong>UniFi controller / monitor:</strong> <a href="https://unifi.dev.internal/" target="_blank" rel="noopener">https://unifi.dev.internal/</a></li>
+<li><strong>UniFi controller </a></li>
 </ul>
 
 <h2 class="wp-block-heading">Hardware Devices</h2>
@@ -29,8 +29,6 @@ export const html = `
 <h2 class="wp-block-heading">Topology</h2>
 
 <p>Internet → <strong>UCG Ultra</strong> gateway → <strong>USW-Lite-8-PoE</strong> switch, which feeds the wired IoT and server devices and uplinks the <strong>U7 Pro XG</strong> access point. One device (work laptop) is plugged directly into the gateway’s own switch port. The access point serves wireless clients on the Trusted and IoT VLANs over the “Hessel-Wifi” SSID.</p>
-
-<p>Live topology view: open the UniFi controller (<a href="https://unifi.dev.internal/" target="_blank" rel="noopener">https://unifi.dev.internal/</a>) and click <strong>Topology</strong> in the sidebar — it's a client-side app view with no stable direct URL to link to.</p>
 
 <h2 class="wp-block-heading">Connected Clients</h2>
 
