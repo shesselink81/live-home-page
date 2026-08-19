@@ -55,7 +55,8 @@
       "Bash(npm ci *)",
       "PowerShell(Get-CimInstance *)",
       "Bash(cd \"/d/Users/Sander/repos/unifi-ai/app\")",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(node *)"
     ]
   },
   "enabledMcpjsonServers": [
