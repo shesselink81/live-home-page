@@ -10,6 +10,9 @@ import ClientsTable from '@/components/ClientsTable'
 import IspCharts from '@/components/IspCharts'
 import GatewayCharts from '@/components/GatewayCharts'
 import NetworkTopology from '@/components/NetworkTopology'
+import StaticPageTab from '@/components/StaticPageTab'
+import * as dockerKubernetesContent from '@/content/dockerKubernetes'
+import * as homeNetworkContent from '@/content/homeNetwork'
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -17,9 +20,14 @@ const fetcher = (url: string) =>
     return r.json()
   })
 const REFRESH = 10_000
-const TABS = ['overview', 'topology'] as const
+const TABS = ['overview', 'topology', 'docker', 'network'] as const
 type Tab = (typeof TABS)[number]
-const TAB_LABEL: Record<Tab, string> = { overview: 'Overview', topology: 'Topology' }
+const TAB_LABEL: Record<Tab, string> = {
+  overview: 'Overview',
+  topology: 'Topology',
+  docker: 'Web Apps & K8s',
+  network: 'Home Network',
+}
 
 export default function Dashboard() {
   const [tab, setTab] = useState<Tab>('overview')
@@ -108,6 +116,10 @@ export default function Dashboard() {
       {tab === 'topology' && (
         <NetworkTopology root={topology} error={topoErr ? String(topoErr) : undefined} />
       )}
+
+      {tab === 'docker' && <StaticPageTab {...dockerKubernetesContent} />}
+
+      {tab === 'network' && <StaticPageTab {...homeNetworkContent} />}
     </div>
   )
 }
