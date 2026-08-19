@@ -1,6 +1,6 @@
 # Cloude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-08-18T17:32:48.894Z_
+_Generated: 2026-08-19T10:19:28.067Z_
 
 ## How to use this report
 
@@ -15,9 +15,12 @@ _Generated: 2026-08-18T17:32:48.894Z_
 
 Workspace `mcp.json` _(folder: unifi-ai)_
 
-- **d:\Users\Sander\repos\unifi-ai\.mcp.json** — _File missing_
+- **d:\Users\Sander\repos\unifi-ai\.mcp.json** — _File exists — servers defined_
 
-_No active workspace servers in mcp.json._
+| Server id | Kind | Detail |
+|-----------|------|--------|
+| unifi Local | stdio | unifi-mcp-server |
+| unifi Cloud | stdio | unifi-mcp-server |
 
 ## MCP — user profile
 
@@ -25,12 +28,9 @@ _No active workspace servers in mcp.json._
 
 | Server id | Kind | Detail |
 |-----------|------|--------|
-| wordpress-detuinkamer | stdio | npx -y @automattic/mcp-wordpress-remote |
 | kubernetes | stdio | npx -y kubernetes-mcp-server@latest |
-| azure/aks-mcp | stdio | docker run -i --rm -v C:/Users/shess/.azure:/root/.azure ghcr.io/azure/aks-mcp:latest --transport stdio |
 | context7 | http | https://mcp.context7.com/mcp |
 | io.github.upstash/context7 | stdio | npx @upstash/context7-mcp@1.0.31 |
-| MCP_DOCKER | stdio | docker mcp gateway run --profile ai_coding |
 
 _User servers **off** (Toolbox stash):_
 
