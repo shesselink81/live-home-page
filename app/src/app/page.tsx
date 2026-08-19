@@ -36,7 +36,7 @@ export default function Dashboard() {
   const now = new Date().toLocaleTimeString()
 
   return (
-    <div className="min-h-screen p-6 max-w-7xl mx-auto">
+    <div className={`min-h-screen p-6 mx-auto ${tab === 'topology' ? 'max-w-[1800px]' : 'max-w-7xl'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
