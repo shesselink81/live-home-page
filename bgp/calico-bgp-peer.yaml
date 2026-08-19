@@ -1,8 +1,0 @@
-apiVersion: projectcalico.org/v3
-kind: BGPPeer
-metadata:
-  name: ucg-ultra
-spec:
-  # UCG Ultra's Trusted VLAN 30 interface — same L2 segment as the kind load-balancer node
-  peerIP: 192.168.30.1
-  asNumber: 65000
