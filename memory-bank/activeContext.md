@@ -1,6 +1,8 @@
 # Active context
 
-**Current focus**: Gateway security hardening — UCG Ultra analyse en firewall cleanup (2026-06-07).
+**Current focus**: Added a live-updating Network Topology tab to the dashboard (2026-08-19). `page.tsx` now has an Overview/Topology tab switcher; Topology renders a tree (Internet → gateway → switches/APs → clients) fetched from new `/api/topology`, built in `src/lib/topology.ts` from `Device.uplinkMac`/`switchDepth` (added to `getDevices()`) and existing `Client.ap_mac`/`sw_mac`. No new npm dependencies — pure Tailwind/CSS org-chart layout in `NetworkTopology.tsx`.
+
+**Previous focus**: Gateway security hardening — UCG Ultra analyse en firewall cleanup (2026-06-07).
 
 **Completed this session**:
 

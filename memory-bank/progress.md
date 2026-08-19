@@ -3,6 +3,7 @@
 **What works**
 
 - Next.js dashboard with live WAN health card, device grid, clients table, and ISP latency/uptime charts.
+- Topology tab: live-updating tree view (Internet → gateway → switches/APs → clients) built from `stat/device` uplink data + `stat/sta` client associations, no new deps (pure CSS org-chart, `/api/topology`, `src/lib/topology.ts`, `src/components/NetworkTopology.tsx`). Only polls while the tab is active.
 - 10-second SWR auto-refresh with in-memory rolling history (~2 hr).
 - Docker Compose setup for dev (hot-reload) and production (multi-stage standalone).
 - GitHub Actions CI/CD publishing multi-arch images on `v*` tags.

@@ -64,6 +64,9 @@ export interface Device {
   bytes: number
   cpu: number | null
   mem: number | null
+  uplinkMac: string | null
+  uplinkPortIdx: number | null
+  switchDepth: number
 }
 
 export interface Client {
@@ -105,6 +108,7 @@ export interface WanHealth {
 
 function mapDevice(r: Record<string, unknown>): Device {
   const sys = r['system-stats'] as { cpu?: string; mem?: string } | undefined
+  const uplink = r.uplink as { uplink_mac?: string; port_idx?: number } | undefined
   return {
     mac: r.mac as string,
     name: r.name as string,
@@ -119,6 +123,9 @@ function mapDevice(r: Record<string, unknown>): Device {
     bytes: r.bytes as number,
     cpu: sys?.cpu != null ? parseFloat(sys.cpu) : null,
     mem: sys?.mem != null ? parseFloat(sys.mem) : null,
+    uplinkMac: uplink?.uplink_mac ?? (r.uplink_mac as string | undefined) ?? null,
+    uplinkPortIdx: uplink?.port_idx ?? null,
+    switchDepth: (r.switch_depth as number | undefined) ?? 0,
   }
 }
 
