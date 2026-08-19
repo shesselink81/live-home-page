@@ -45,7 +45,17 @@
       "mcp__unifi_Local__list_active_clients",
       "mcp__wordpress__wp_list_pages",
       "mcp__wordpress__wp_get_site_settings",
-      "mcp__wordpress__wp_create_page"
+      "mcp__wordpress__wp_create_page",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill *)",
+      "Bash(rm -rf node_modules)",
+      "Bash(npm ci *)",
+      "PowerShell(Get-CimInstance *)",
+      "Bash(cd \"/d/Users/Sander/repos/unifi-ai/app\")",
+      "Bash(npx next *)"
     ]
   },
   "enabledMcpjsonServers": [
