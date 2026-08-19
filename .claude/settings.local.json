@@ -35,7 +35,17 @@
       "mcp__unifi_Local__list_vpn_servers",
       "mcp__unifi_Local__get_site_to_site_vpn",
       "mcp__unifi_Local__list_firewall_zones",
-      "mcp__unifi_Local__list_firewall_zones_v2"
+      "mcp__unifi_Local__list_firewall_zones_v2",
+      "mcp__unifi_Local__list_vlans",
+      "mcp__unifi_Cloud__list_sites",
+      "mcp__unifi_Cloud__get_site_inventory",
+      "mcp__unifi_Cloud__get_site_details",
+      "mcp__unifi_Cloud__list_hosts",
+      "mcp__unifi_Local__health_check",
+      "mcp__unifi_Local__list_active_clients",
+      "mcp__wordpress__wp_list_pages",
+      "mcp__wordpress__wp_get_site_settings",
+      "mcp__wordpress__wp_create_page"
     ]
   },
   "enabledMcpjsonServers": [
