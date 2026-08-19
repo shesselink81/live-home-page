@@ -56,7 +56,9 @@
       "PowerShell(Get-CimInstance *)",
       "Bash(cd \"/d/Users/Sander/repos/unifi-ai/app\")",
       "Bash(npx next *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "mcp__wordpress__wp_get_page",
+      "Bash(gh repo *)"
     ]
   },
   "enabledMcpjsonServers": [
