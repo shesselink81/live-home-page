@@ -10,10 +10,9 @@ import ClientsTable from '@/components/ClientsTable'
 import IspCharts from '@/components/IspCharts'
 import GatewayCharts from '@/components/GatewayCharts'
 import NetworkTopology from '@/components/NetworkTopology'
-import HomeNetworkTab from '@/components/HomeNetworkTab'
+import NetworksTable from '@/components/NetworksTable'
 import StaticPageTab from '@/components/StaticPageTab'
 import * as dockerKubernetesContent from '@/content/dockerKubernetes'
-import * as githubReposContent from '@/content/githubRepos'
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -21,14 +20,12 @@ const fetcher = (url: string) =>
     return r.json()
   })
 const REFRESH = 10_000
-const TABS = ['overview', 'topology', 'docker', 'network', 'repos'] as const
+const TABS = ['overview', 'topology', 'docker'] as const
 type Tab = (typeof TABS)[number]
 const TAB_LABEL: Record<Tab, string> = {
   overview: 'Overview',
   topology: 'Topology',
-  docker: 'Web Apps & K8s',
-  network: 'Home Network',
-  repos: 'GitHub Repos',
+  docker: 'Cloud Apps',
 }
 
 export default function Dashboard() {
@@ -38,12 +35,12 @@ export default function Dashboard() {
   const { data: devices, error: devErr } = useSWR<Device[]>('/api/devices', fetcher, { refreshInterval: REFRESH })
   const { data: clients, error: cliErr } = useSWR<Client[]>('/api/clients', fetcher, { refreshInterval: REFRESH })
   const { data: topology, error: topoErr } = useSWR<TopologyNode | null>(
-    tab === 'topology' || tab === 'network' ? '/api/topology' : null,
+    tab === 'topology' ? '/api/topology' : null,
     fetcher,
     { refreshInterval: REFRESH }
   )
   const { data: networks, error: netErr } = useSWR<NetworkConf[]>(
-    tab === 'network' ? '/api/networks' : null,
+    tab === 'overview' ? '/api/networks' : null,
     fetcher,
     { refreshInterval: REFRESH }
   )
@@ -100,6 +97,11 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Networks & VLANs */}
+          <div className="mt-6">
+            <NetworksTable networks={networks} error={netErr ? String(netErr) : undefined} />
+          </div>
+
           {/* Clients */}
           <div className="mt-6">
             <ClientsTable
@@ -125,21 +127,6 @@ export default function Dashboard() {
       )}
 
       {tab === 'docker' && <StaticPageTab {...dockerKubernetesContent} />}
-
-      {tab === 'network' && (
-        <HomeNetworkTab
-          devices={devices}
-          devError={devErr ? String(devErr) : undefined}
-          clients={clients}
-          cliError={cliErr ? String(cliErr) : undefined}
-          networks={networks}
-          netError={netErr ? String(netErr) : undefined}
-          topology={topology}
-          topoError={topoErr ? String(topoErr) : undefined}
-        />
-      )}
-
-      {tab === 'repos' && <StaticPageTab {...githubReposContent} />}
     </div>
   )
 }
