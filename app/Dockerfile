@@ -1,4 +1,4 @@
-FROM node:26-alpine-dev AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 COPY package.json ./
 RUN npm install && chown -R node:node /app
