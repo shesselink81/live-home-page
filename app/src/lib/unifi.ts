@@ -106,6 +106,15 @@ export interface WanHealth {
   issues: Array<{ highLatency?: boolean; packetLoss?: boolean; wanDowntime?: boolean }>
 }
 
+export interface NetworkConf {
+  id: string
+  name: string
+  vlan: number | null
+  subnet: string | null
+  purpose: string
+  enabled: boolean
+}
+
 function mapDevice(r: Record<string, unknown>): Device {
   const sys = r['system-stats'] as { cpu?: string; mem?: string } | undefined
   const uplink = r.uplink as { uplink_mac?: string; port_idx?: number } | undefined
@@ -152,6 +161,17 @@ function mapClient(r: Record<string, unknown>): Client {
   }
 }
 
+function mapNetwork(r: Record<string, unknown>): NetworkConf {
+  return {
+    id: r._id as string,
+    name: r.name as string,
+    vlan: (r.vlan as number | undefined) ?? null,
+    subnet: (r.ip_subnet as string | undefined) ?? null,
+    purpose: (r.purpose as string | undefined) ?? 'corporate',
+    enabled: (r.enabled as boolean | undefined) ?? true,
+  }
+}
+
 const GATEWAY_TYPES = new Set(['udm', 'ugw', 'uxg'])
 
 export async function getDevices(): Promise<Device[]> {
@@ -167,6 +187,11 @@ export async function getGateway(): Promise<Device | null> {
 export async function getClients(): Promise<Client[]> {
   const raw = await localGet('/api/s/default/stat/sta') as Record<string, unknown>[]
   return raw.map(mapClient)
+}
+
+export async function getNetworks(): Promise<NetworkConf[]> {
+  const raw = await localGet('/api/s/default/rest/networkconf') as Record<string, unknown>[]
+  return raw.map(mapNetwork).filter((n) => n.enabled)
 }
 
 interface LocalHealthEntry {
