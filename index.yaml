@@ -2,6 +2,22 @@ apiVersion: v1
 entries:
   unifi-ai:
   - apiVersion: v2
+    appVersion: v1.2.7
+    created: "2026-08-20T20:29:24.376183026Z"
+    description: UniFi network monitoring dashboard
+    digest: dc665fbb58dba1d7b6d9b58fe90cc9a9a0067594728808dbe84d7d8ef2dea9a0
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.7/unifi-ai-1.2.7.tgz
+    version: 1.2.7
+  - apiVersion: v2
     appVersion: v1.2.6
     created: "2026-08-20T20:22:21.440987768Z"
     description: UniFi network monitoring dashboard
@@ -129,4 +145,4 @@ entries:
     urls:
     - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.1.9/unifi-ai-1.1.9.tgz
     version: 1.1.9
-generated: "2026-08-20T20:22:21.441025675Z"
+generated: "2026-08-20T20:29:24.376202533Z"
