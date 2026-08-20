@@ -2,8 +2,8 @@ apiVersion: v2
 name: unifi-ai
 description: UniFi network monitoring dashboard
 type: application
-version: 1.2.4
-appVersion: v1.2.4
+version: 1.2.5
+appVersion: v1.2.5
 icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
 home: https://github.com/shesselink81/unifi-ai
 sources:
