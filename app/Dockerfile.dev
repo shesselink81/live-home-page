@@ -1,4 +1,4 @@
-FROM dhi.io/node:26-alpine3.23-dev
+FROM dhi.io/node:26-alpine-dev
 WORKDIR /app
 COPY package.json ./
 RUN npm install
