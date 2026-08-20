@@ -1,11 +1,11 @@
-FROM dhi.io/node:26-alpine3.23-dev AS builder
+FROM node:26-alpine-dev AS builder
 WORKDIR /app
 COPY package.json ./
 RUN npm install && chown -R node:node /app
 COPY --chown=node:node . .
 RUN npm run build && mkdir -p /app/public
 
-FROM dhi.io/node:26-alpine3.23 AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=4000 \
