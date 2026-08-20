@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import type { Device, Client, WanHealth } from '@/lib/unifi'
+import type { Device, Client, WanHealth, NetworkConf } from '@/lib/unifi'
 import type { TopologyNode } from '@/lib/topology'
 import WanHealthCard from '@/components/WanHealthCard'
 import DeviceCard from '@/components/DeviceCard'
@@ -10,9 +10,10 @@ import ClientsTable from '@/components/ClientsTable'
 import IspCharts from '@/components/IspCharts'
 import GatewayCharts from '@/components/GatewayCharts'
 import NetworkTopology from '@/components/NetworkTopology'
+import HomeNetworkTab from '@/components/HomeNetworkTab'
 import StaticPageTab from '@/components/StaticPageTab'
 import * as dockerKubernetesContent from '@/content/dockerKubernetes'
-import * as homeNetworkContent from '@/content/homeNetwork'
+import * as githubReposContent from '@/content/githubRepos'
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -20,13 +21,14 @@ const fetcher = (url: string) =>
     return r.json()
   })
 const REFRESH = 10_000
-const TABS = ['overview', 'topology', 'docker', 'network'] as const
+const TABS = ['overview', 'topology', 'docker', 'network', 'repos'] as const
 type Tab = (typeof TABS)[number]
 const TAB_LABEL: Record<Tab, string> = {
   overview: 'Overview',
   topology: 'Topology',
   docker: 'Web Apps & K8s',
   network: 'Home Network',
+  repos: 'GitHub Repos',
 }
 
 export default function Dashboard() {
@@ -36,7 +38,12 @@ export default function Dashboard() {
   const { data: devices, error: devErr } = useSWR<Device[]>('/api/devices', fetcher, { refreshInterval: REFRESH })
   const { data: clients, error: cliErr } = useSWR<Client[]>('/api/clients', fetcher, { refreshInterval: REFRESH })
   const { data: topology, error: topoErr } = useSWR<TopologyNode | null>(
-    tab === 'topology' ? '/api/topology' : null,
+    tab === 'topology' || tab === 'network' ? '/api/topology' : null,
+    fetcher,
+    { refreshInterval: REFRESH }
+  )
+  const { data: networks, error: netErr } = useSWR<NetworkConf[]>(
+    tab === 'network' ? '/api/networks' : null,
     fetcher,
     { refreshInterval: REFRESH }
   )
@@ -48,7 +55,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">UniFi Monitor</h1>
+          <h1 className="text-2xl font-bold text-white">Used IT Tech @ Home</h1>
           <p className="text-gray-500 text-sm mt-0.5" suppressHydrationWarning>Refreshes every 10 s · Last update: {now}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -119,7 +126,20 @@ export default function Dashboard() {
 
       {tab === 'docker' && <StaticPageTab {...dockerKubernetesContent} />}
 
-      {tab === 'network' && <StaticPageTab {...homeNetworkContent} />}
+      {tab === 'network' && (
+        <HomeNetworkTab
+          devices={devices}
+          devError={devErr ? String(devErr) : undefined}
+          clients={clients}
+          cliError={cliErr ? String(cliErr) : undefined}
+          networks={networks}
+          netError={netErr ? String(netErr) : undefined}
+          topology={topology}
+          topoError={topoErr ? String(topoErr) : undefined}
+        />
+      )}
+
+      {tab === 'repos' && <StaticPageTab {...githubReposContent} />}
     </div>
   )
 }
