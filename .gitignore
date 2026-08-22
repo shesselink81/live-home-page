@@ -2,3 +2,5 @@
 app/node_modules/
 app/.next/
 .mcp.json
+kubeconfig
+app/.env.local
