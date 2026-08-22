@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Used IT Tech @ Home',
+  title: process.env.APP_TITLE ?? 'Used IT Tech @ Home',
   description: 'Home network, self-hosted infrastructure, and GitHub tech-stack dashboard',
 }
 

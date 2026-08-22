@@ -1,0 +1,124 @@
+replicaCount: 1
+
+# Optional: dashboard header + browser tab title
+appTitle: "Used IT Tech @ Home"
+
+image:
+  repository: ghcr.io/shesselink81/live-home-page
+  tag: ""  # defaults to Chart.appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# UniFi connection settings
+unifi:
+  # Local controller IP or hostname (required)
+  localIp: "192.168.1.1"
+  # Override full local URL (optional; constructed from localIp when empty)
+  localUrl: ""
+  # Cloud API base URL (optional)
+  cloudUrl: "https://api.ui.com"
+
+  # API keys — stored in a Secret created by this chart.
+  # Set existingSecret to use a pre-existing Secret instead (keys: local-api-key, cloud-api-key).
+  localApiKey: ""
+  cloudApiKey: ""
+  existingSecret: ""
+
+  # Optional bearer token for /api/* routes (leave empty to disable)
+  dashboardToken: ""
+
+# Optional: live Cloud Apps tab (MCP servers). Each source is independent —
+# leave a URL empty to show a "not reachable" state for that source. None of
+# these servers' own credentials are stored here; githubToken is the only
+# secret this chart holds, stored the same way as the UniFi API keys above.
+#
+# host is a shortcut: when a specific *Url below is empty, its URL is built
+# from host (http://<host>:<port>/mcp — kubernetesUrl:8087, githubUrl:8082,
+# homeassistantUrl:8086). Set an individual *Url instead if a source lives
+# somewhere other than host.
+mcp:
+  host: ""
+  kubernetesUrl: ""
+  githubUrl: ""
+  githubToken: ""
+  homeassistantUrl: ""
+
+# Optional: restrict the whole app (pages + /api/*) to specific CIDRs, see
+# app/src/middleware.ts. Leave empty to allow only loopback — nothing else
+# can reach the app until this is set.
+network:
+  allowedNetworks: ""
+
+# Optional: Microsoft Entra ID SSO (see app/src/auth.ts). Layers on top of
+# network.allowedNetworks above — both must pass, SSO doesn't replace it.
+# Leave clientId/clientSecret/issuer empty to keep SSO fully disabled.
+# clientSecret and authSecret are stored in the Secret this chart creates,
+# the same way as the UniFi API keys above.
+sso:
+  clientId: ""
+  clientSecret: ""
+  # https://login.microsoftonline.com/<tenant-id>/v2.0
+  issuer: ""
+  # Random signing key for the session JWT — generate with:
+  #   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+  authSecret: ""
+  # Optional comma-separated allowlist. Leave empty to allow any account in
+  # the tenant (the tenant itself is still the boundary via the app registration).
+  allowedEmails: ""
+
+# Optional: Home tab favorite-app links. No built-in default — the Home tab
+# shows no links until at least one entry is added. Entries sharing the same
+# title are grouped together in the UI.
+homeLinks:
+  links: []
+  # - title: "@home hosted web apps"
+  #   label: "Home Assistant"
+  #   url: "https://home.hessel.cloud/"
+  #   note: "haos"  # optional
+  # JSON {label,url} for the repo link tile
+  repoLink: ""
+
+service:
+  type: ClusterIP
+  port: 4000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: live-home-page.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Gateway API HTTPRoute (gateway.networking.k8s.io/v1)
+httpRoute:
+  enabled: false
+  parentRefs:
+    - name: ""          # name of the Gateway resource (required)
+      namespace: ""     # namespace of the Gateway (optional, defaults to same namespace)
+      sectionName: ""   # listener name on the Gateway e.g. "https" (optional)
+  hostnames: []
+  # - unifi.example.com
+
+resources: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

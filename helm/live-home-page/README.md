@@ -1,6 +1,6 @@
-# unifi-ai Helm chart
+# live-home-page Helm chart
 
-Deploys the [unifi-ai](https://github.com/shesselink81/unifi-ai) monitoring dashboard on Kubernetes.
+Deploys the [live-home-page](https://github.com/shesselink81/live-home-page) monitoring dashboard on Kubernetes.
 
 ## Requirements
 
@@ -12,7 +12,7 @@ Deploys the [unifi-ai](https://github.com/shesselink81/unifi-ai) monitoring dash
 ## Installing
 
 ```sh
-helm install unifi-ai . \
+helm install live-home-page . \
   --set unifi.localIp=192.168.1.1 \
   --set unifi.localApiKey=YOUR_LOCAL_KEY \
   --set unifi.cloudApiKey=YOUR_CLOUD_KEY
@@ -21,7 +21,7 @@ helm install unifi-ai . \
 Then port-forward to verify:
 
 ```sh
-kubectl port-forward svc/unifi-ai 4000:4000
+kubectl port-forward svc/live-home-page 4000:4000
 # open http://localhost:4000
 ```
 
@@ -30,7 +30,7 @@ kubectl port-forward svc/unifi-ai 4000:4000
 | Key | Default | Description |
 |-----|---------|-------------|
 | `replicaCount` | `1` | Number of pod replicas |
-| `image.repository` | `ghcr.io/shesselink81/unifi-ai` | Container image |
+| `image.repository` | `ghcr.io/shesselink81/live-home-page` | Container image |
 | `image.tag` | `""` | Image tag; defaults to `Chart.appVersion` |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy |
 | `unifi.localIp` | `192.168.1.1` | IP or hostname of the local UniFi controller |
@@ -62,7 +62,7 @@ kubectl port-forward svc/unifi-ai 4000:4000
 ### Ingress
 
 ```sh
-helm upgrade unifi-ai . \
+helm upgrade live-home-page . \
   --set ingress.enabled=true \
   --set ingress.className=nginx \
   --set ingress.hosts[0].host=unifi.example.com \
@@ -75,7 +75,7 @@ helm upgrade unifi-ai . \
 Requires the [Gateway API CRDs](https://gateway-api.sigs.k8s.io/guides/) and an existing `Gateway` resource.
 
 ```sh
-helm upgrade unifi-ai . \
+helm upgrade live-home-page . \
   --set httpRoute.enabled=true \
   --set httpRoute.parentRefs[0].name=my-gateway \
   --set httpRoute.parentRefs[0].namespace=gateway \
@@ -90,17 +90,17 @@ helm upgrade unifi-ai . \
 Create the Secret yourself, then reference it:
 
 ```sh
-kubectl create secret generic unifi-ai-keys \
+kubectl create secret generic live-home-page-keys \
   --from-literal=local-api-key=YOUR_LOCAL_KEY \
   --from-literal=cloud-api-key=YOUR_CLOUD_KEY
 
-helm install unifi-ai . \
+helm install live-home-page . \
   --set unifi.localIp=192.168.1.1 \
-  --set unifi.existingSecret=unifi-ai-keys
+  --set unifi.existingSecret=live-home-page-keys
 ```
 
 ## Uninstalling
 
 ```sh
-helm uninstall unifi-ai
+helm uninstall live-home-page
 ```

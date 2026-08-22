@@ -49,7 +49,7 @@ lients` | Local API `/stat/sta` — active wired + wireless clients |
 
 - `Dockerfile` — Dev image (Node 26 Alpine, `npm run dev`)
 - `Dockerfile.prod` — Multi-stage production build → standalone Next.js app; non-root user, port 4000
-- `.github/workflows/release.yml` — Builds and pushes `ghcr.io/shesselink81/unifi-ai` for `linux/amd64` + `linux/arm64` on `v*` tags
+- `.github/workflows/release.yml` — Builds and pushes `ghcr.io/shesselink81/live-home-page` for `linux/amd64` + `linux/arm64` on `v*` tags (image name follows `github.repository` automatically)
 
 ## MCP Integration
 
@@ -91,11 +91,13 @@ Use `/mcp` in Claude Code to access these tools once the MCP containers are runn
 
 
 
+
+
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (Cloude Code ToolBox)
 
-_Last synced: 2026-08-20T19:23:52.391Z._
+_Last synced: 2026-08-22T15:17:16.699Z._
 
 - **Full report:** `.claude/cloude-code-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools** in Claude Code, enable the matching server via `/mcp`. Servers are configured in `~/.claude.json` (user) and `.mcp.json` (project).

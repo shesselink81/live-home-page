@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "live-home-page.fullname" . }}
+  labels:
+    {{- include "live-home-page.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "live-home-page.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "live-home-page.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: monitor
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 4000
+              protocol: TCP
+          env:
+            - name: APP_TITLE
+              value: {{ .Values.appTitle | quote }}
+            - name: UNIFI_LOCAL_URL
+              value: {{ include "live-home-page.localUrl" . | quote }}
+            - name: UNIFI_CLOUD_URL
+              value: {{ .Values.unifi.cloudUrl | quote }}
+            - name: UNIFI_LOCAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: local-api-key
+            - name: UNIFI_CLOUD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: cloud-api-key
+            {{- if or .Values.unifi.dashboardToken .Values.unifi.existingSecret }}
+            - name: DASHBOARD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: dashboard-token
+                  optional: true
+            {{- end }}
+            {{- if or .Values.mcp.kubernetesUrl .Values.mcp.host }}
+            - name: MCP_KUBERNETES_URL
+              value: {{ (.Values.mcp.kubernetesUrl | default (printf "http://%s:8087/mcp" .Values.mcp.host)) | quote }}
+            {{- end }}
+            {{- if or .Values.mcp.githubUrl .Values.mcp.host }}
+            - name: MCP_GITHUB_URL
+              value: {{ (.Values.mcp.githubUrl | default (printf "http://%s:8082/mcp" .Values.mcp.host)) | quote }}
+            {{- end }}
+            {{- if or .Values.mcp.githubToken .Values.unifi.existingSecret }}
+            - name: MCP_GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: mcp-github-token
+                  optional: true
+            {{- end }}
+            {{- if or .Values.mcp.homeassistantUrl .Values.mcp.host }}
+            - name: MCP_HOMEASSISTANT_URL
+              value: {{ (.Values.mcp.homeassistantUrl | default (printf "http://%s:8086/mcp" .Values.mcp.host)) | quote }}
+            {{- end }}
+            {{- if .Values.network.allowedNetworks }}
+            - name: ALLOWED_NETWORKS
+              value: {{ .Values.network.allowedNetworks | quote }}
+            {{- end }}
+            {{- range $i, $l := .Values.homeLinks.links }}
+            - name: HOME_LINK_{{ $i }}_TITLE
+              value: {{ $l.title | quote }}
+            - name: HOME_LINK_{{ $i }}_LABEL
+              value: {{ $l.label | quote }}
+            - name: HOME_LINK_{{ $i }}_URL
+              value: {{ $l.url | quote }}
+            {{- if $l.note }}
+            - name: HOME_LINK_{{ $i }}_NOTE
+              value: {{ $l.note | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.homeLinks.repoLink }}
+            - name: HOME_REPO_LINK
+              value: {{ .Values.homeLinks.repoLink | quote }}
+            {{- end }}
+            {{- if .Values.sso.clientId }}
+            - name: AUTH_MICROSOFT_ENTRA_ID_ID
+              value: {{ .Values.sso.clientId | quote }}
+            - name: AUTH_MICROSOFT_ENTRA_ID_ISSUER
+              value: {{ .Values.sso.issuer | quote }}
+            - name: AUTH_MICROSOFT_ENTRA_ID_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: sso-client-secret
+                  optional: true
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: sso-auth-secret
+                  optional: true
+            {{- if .Values.sso.allowedEmails }}
+            - name: AUTH_ALLOWED_EMAILS
+              value: {{ .Values.sso.allowedEmails | quote }}
+            {{- end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

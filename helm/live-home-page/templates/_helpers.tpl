@@ -1,8 +1,8 @@
-{{- define "unifi-ai.name" -}}
+{{- define "live-home-page.name" -}}
 {{- .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "unifi-ai.fullname" -}}
+{{- define "live-home-page.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -15,28 +15,28 @@
 {{- end }}
 {{- end }}
 
-{{- define "unifi-ai.labels" -}}
+{{- define "live-home-page.labels" -}}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version }}
-app.kubernetes.io/name: {{ include "unifi-ai.name" . }}
+app.kubernetes.io/name: {{ include "live-home-page.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{- define "unifi-ai.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "unifi-ai.name" . }}
+{{- define "live-home-page.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "live-home-page.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "unifi-ai.secretName" -}}
+{{- define "live-home-page.secretName" -}}
 {{- if .Values.unifi.existingSecret }}
 {{- .Values.unifi.existingSecret }}
 {{- else }}
-{{- include "unifi-ai.fullname" . }}
+{{- include "live-home-page.fullname" . }}
 {{- end }}
 {{- end }}
 
-{{- define "unifi-ai.localUrl" -}}
+{{- define "live-home-page.localUrl" -}}
 {{- if .Values.unifi.localUrl }}
 {{- .Values.unifi.localUrl }}
 {{- else }}

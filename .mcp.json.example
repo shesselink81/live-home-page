@@ -14,6 +14,21 @@
         "UNIFI_API_KEY": "<your-cloud-api-key>",
         "UNIFI_API_TYPE": "cloud-v1"
       }
+    },
+    "Home Assistant": {
+      "type": "http",
+      "url": "http://localhost:8086/mcp"
+    },
+    "kubernetes": {
+      "type": "http",
+      "url": "http://localhost:8087/mcp"
+    },
+    "github": {
+      "type": "http",
+      "url": "http://localhost:8082/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-github-pat>"
+      }
     }
   }
 }

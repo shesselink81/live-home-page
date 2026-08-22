@@ -1,0 +1,68 @@
+# Dedicated stack for the MCP servers backing the live-home-page dashboard's
+# live Cloud Apps tab. Meant to run on docker-server (192.168.50.3), not on a
+# dev machine — the app's own MCP_*_URL env vars point at MCP_HOST (see .env).
+#
+# Usage (on docker-server, from the directory holding this file and a
+# `kubeconfig` file with read access to the cluster):
+#   docker compose -f docker-compose.mcp.yaml up -d
+#
+# No MCP server credentials are committed to this repo: Home Assistant's
+# token and the kubeconfig both come from the host's own .env/filesystem.
+# The GitHub server holds no secret at all — the live-home-page app authenticates
+# to it per-request with its own MCP_GITHUB_TOKEN.
+
+services:
+  ha-mcp:
+    container_name: ha-mcp
+    image: ghcr.io/homeassistant-ai/ha-mcp:latest
+    command: ha-mcp-web
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    ports:
+      - "8086:8086"
+    volumes:
+      - ha-mcp-data:/home/mcpuser/.ha-mcp
+    environment:
+      - HOMEASSISTANT_URL=${HOMEASSISTANT_URL}
+      - HOMEASSISTANT_TOKEN=${HOMEASSISTANT_TOKEN}
+    restart: unless-stopped
+
+  kubernetes-mcp-server:
+    image: ghcr.io/containers/kubernetes-mcp-server:latest
+    container_name: kubernetes-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8087:8080"
+    volumes:
+      - ${KUBECONFIG_PATH:-./kubeconfig}:/kubeconfig/config:ro
+    command:
+      - --port=8080
+      - --kubeconfig=/kubeconfig/config
+      - --read-only
+      - --disable-destructive
+      - --stateless
+
+  github-mcp-server:
+    image: ghcr.io/github/github-mcp-server:latest
+    container_name: github-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    command:
+      - http
+      - --port=8082
+      - --read-only
+      - --toolsets=repos,context
+
+volumes:
+  ha-mcp-data:
+    name: ha-mcp-data

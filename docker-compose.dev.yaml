@@ -3,14 +3,22 @@ services:
     build: 
      context: ./app
      dockerfile: Dockerfile.dev
-    image: ghcr.io/shesselink81/unifi-ai:v${VERSION}-dev
+    image: ghcr.io/shesselink81/live-home-page:v${VERSION}-dev
     ports:
       - "127.0.0.1:4000:4000"
+    # Loads every var in .env into the container as-is — needed for the
+    # variable-length HOME_LINK_<N>_TITLE/_LABEL/_URL/_NOTE set (see .env.example)
+    # and ALLOWED_NETWORKS, neither of which has a fixed key list to enumerate below.
+    env_file: .env
     environment:
       UNIFI_LOCAL_URL: https://${UNIFI_LOCAL_IP}/proxy/network
       UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
       UNIFI_CLOUD_URL: https://api.ui.com
       UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
+      MCP_KUBERNETES_URL: ${MCP_KUBERNETES_URL:-http://${MCP_HOST:-192.168.1.1}:8087/mcp}
+      MCP_GITHUB_URL: ${MCP_GITHUB_URL:-http://${MCP_HOST:-192.168.1.1}:8082/mcp}
+      MCP_GITHUB_TOKEN: ${MCP_GITHUB_TOKEN}
+      MCP_HOMEASSISTANT_URL: ${MCP_HOMEASSISTANT_URL:-http://${MCP_HOST:-192.168.1.1}:8086/mcp}
     volumes:
       - ./app/src:/app/src
       - ./app/public:/app/public

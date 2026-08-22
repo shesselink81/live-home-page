@@ -65,6 +65,8 @@
     "unifi-cloud",
     "unifi-local",
     "unifi Local",
-    "unifi Cloud"
-  ]
+    "unifi Cloud",
+    "Home Assistant"
+  ],
+  "enableAllProjectMcpServers": true
 }
