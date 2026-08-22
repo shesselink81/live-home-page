@@ -1,5 +1,21 @@
 apiVersion: v1
 entries:
+  live-home-page:
+  - apiVersion: v2
+    appVersion: v1.2.8
+    created: "2026-08-22T23:36:15.187949162Z"
+    description: Live Monitoring App with Unifi Network, HA and K8s monitoring
+    digest: 6c9826561813eaab9f46e44c94dfb4d5ecf33204ed72f5ad492b2b8201220285
+    home: https://github.com/shesselink81/live-home-page
+    maintainers:
+    - name: shesselink81
+    name: live-home-page
+    sources:
+    - https://github.com/shesselink81/live-home-page
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/live-home-page-1.2.8/live-home-page-1.2.8.tgz
+    version: 1.2.8
   unifi-ai:
   - apiVersion: v2
     appVersion: v1.2.7
@@ -145,4 +161,4 @@ entries:
     urls:
     - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.1.9/unifi-ai-1.1.9.tgz
     version: 1.1.9
-generated: "2026-08-20T20:29:24.376202533Z"
+generated: "2026-08-22T23:36:15.187973969Z"
