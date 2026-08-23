@@ -100,6 +100,10 @@ spec:
               value: {{ .Values.homeLinks.repoLink | quote }}
             {{- end }}
             {{- if .Values.sso.clientId }}
+            {{- if .Values.host }}
+            - name: AUTH_URL
+              value: {{ printf "https://%s" .Values.host | quote }}
+            {{- end }}
             - name: AUTH_MICROSOFT_ENTRA_ID_ID
               value: {{ .Values.sso.clientId | quote }}
             - name: AUTH_MICROSOFT_ENTRA_ID_ISSUER

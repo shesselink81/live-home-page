@@ -33,7 +33,7 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `image.repository` | `ghcr.io/shesselink81/live-home-page` | Container image |
 | `image.tag` | `""` | Image tag; defaults to `Chart.appVersion` |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy |
-| `host` | `""` | Externally-reachable hostname of this app, e.g. `unifi.example.com` (exposed to the container as `HOST`) |
+| `host` | `""` | Externally-reachable hostname of this app, e.g. `unifi.example.com` (exposed to the container as `HOST`; also sets `AUTH_URL=https://<host>` when `sso.clientId` is set — see [Using SSO behind a proxy](#using-sso-behind-a-proxy)) |
 | `unifi.localIp` | `192.168.1.1` | IP or hostname of the local UniFi controller |
 | `unifi.localUrl` | `""` | Override full local API URL (constructed from `localIp` when empty) |
 | `unifi.cloudUrl` | `https://api.ui.com` | UniFi cloud API base URL |
@@ -99,6 +99,28 @@ helm install live-home-page . \
   --set unifi.localIp=192.168.1.1 \
   --set unifi.existingSecret=live-home-page-keys
 ```
+
+## Using SSO behind a proxy
+
+When `sso.clientId` (Entra ID) is set, also set `host` to the app's public
+hostname (matching `httpRoute.hostnames` / `ingress.hosts`):
+
+```sh
+helm upgrade live-home-page . \
+  --set host=unifi.example.com \
+  --set sso.clientId=... \
+  --set sso.clientSecret=... \
+  --set sso.issuer=...
+```
+
+Without `host`, Auth.js falls back to detecting the request host from
+`X-Forwarded-Host`/`Host` headers (`trustHost: true` in `auth.ts`). Behind a
+Gateway API `HTTPRoute` (or any proxy that doesn't forward those headers
+reliably), this can misdetect the pod's own bind address and redirect to
+something like `https://0.0.0.0:4000/api/auth/signin/microsoft-entra-id`
+instead of the public URL. Setting `host` makes the chart set
+`AUTH_URL=https://<host>`, which Auth.js reads directly and skips header-based
+detection entirely.
 
 ## Uninstalling
 
