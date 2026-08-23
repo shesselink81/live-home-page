@@ -1,6 +1,6 @@
 # live-home-page
 
-UniFi network monitoring stack — dashboard app + MCP servers for AI tooling.
+Live Monitoring App with Unifi Network, HA and K8s monitoring
 
 ## What's inside
 
