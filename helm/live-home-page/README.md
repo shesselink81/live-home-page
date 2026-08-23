@@ -33,6 +33,7 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `image.repository` | `ghcr.io/shesselink81/live-home-page` | Container image |
 | `image.tag` | `""` | Image tag; defaults to `Chart.appVersion` |
 | `image.pullPolicy` | `IfNotPresent` | Image pull policy |
+| `host` | `""` | Externally-reachable hostname of this app, e.g. `unifi.example.com` (exposed to the container as `HOST`) |
 | `unifi.localIp` | `192.168.1.1` | IP or hostname of the local UniFi controller |
 | `unifi.localUrl` | `""` | Override full local API URL (constructed from `localIp` when empty) |
 | `unifi.cloudUrl` | `https://api.ui.com` | UniFi cloud API base URL |

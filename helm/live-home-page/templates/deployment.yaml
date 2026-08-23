@@ -33,6 +33,10 @@ spec:
           env:
             - name: APP_TITLE
               value: {{ .Values.appTitle | quote }}
+            {{- if .Values.host }}
+            - name: HOST
+              value: {{ .Values.host | quote }}
+            {{- end }}
             - name: UNIFI_LOCAL_URL
               value: {{ include "live-home-page.localUrl" . | quote }}
             - name: UNIFI_CLOUD_URL

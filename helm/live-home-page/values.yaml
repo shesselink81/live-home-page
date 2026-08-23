@@ -3,6 +3,12 @@ replicaCount: 1
 # Optional: dashboard header + browser tab title
 appTitle: "Used IT Tech @ Home"
 
+# Optional: externally-reachable hostname of this app (e.g. unifi.example.com).
+# Exposed to the container as the HOST env var. Not required for SSO — Auth.js
+# infers the request host itself (see auth.ts trustHost) — this is for cases
+# where the app needs to know its own public hostname (e.g. building links).
+host: ""
+
 image:
   repository: ghcr.io/shesselink81/live-home-page
   tag: ""  # defaults to Chart.appVersion
