@@ -1,6 +1,11 @@
 .env
+app/.env*.local
+memory-bank/
 app/node_modules/
 app/.next/
 .mcp.json
+.vscode
+.mcp.json
+vpn/
+config
 kubeconfig
-app/.env.local
