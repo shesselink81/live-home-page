@@ -3,10 +3,16 @@ replicaCount: 1
 # Optional: dashboard header + browser tab title
 appTitle: "Used IT Tech @ Home"
 
-# Optional: externally-reachable hostname of this app (e.g. unifi.example.com).
-# Exposed to the container as the HOST env var. Not required for SSO — Auth.js
-# infers the request host itself (see auth.ts trustHost) — this is for cases
-# where the app needs to know its own public hostname (e.g. building links).
+# Externally-reachable hostname of this app (e.g. unifi.example.com), exposed
+# to the container as the HOST env var. Required when sso.clientId is set AND
+# the app sits behind something that doesn't reliably forward
+# X-Forwarded-Host/Proto to the pod (e.g. Gateway API HTTPRoute) — without it,
+# Auth.js's header-based host detection (trustHost, see auth.ts) can fall back
+# to the pod's own bind address, producing bad redirect URLs like
+# https://0.0.0.0:4000/api/auth/signin/... In that case this value is used to
+# set AUTH_URL=https://<host>, which Auth.js reads directly and skips
+# header-based detection entirely. Should match one of httpRoute.hostnames /
+# ingress.hosts.
 host: ""
 
 image:
