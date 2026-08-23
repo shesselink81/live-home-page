@@ -58,15 +58,18 @@
       "Bash(npx next *)",
       "Bash(node *)",
       "mcp__wordpress__wp_get_page",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "Bash(npm -v)",
+      "Bash(npm install *)",
+      "Bash(timeout 40 bash -c 'until grep -qE \"Ready in|✓ Ready|Error\" \"$1\"; do sleep 0.5; done' _ \"C:\\\\Users\\\\shess\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--Users-Sander-repos-unifi-ai\\\\b6f1f7b4-8af9-432f-9a84-e0c0644946d6\\\\tasks\\\\b45ssgs0e.output\")"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "unifi-cloud",
     "unifi-local",
     "unifi Local",
     "unifi Cloud",
     "Home Assistant"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
