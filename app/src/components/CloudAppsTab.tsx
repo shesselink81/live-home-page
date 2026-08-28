@@ -1,12 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import useSWR from 'swr'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import type { K8sNode, K8sPod, FluxSource, FluxHelmRelease } from '@/app/api/cloud/kubernetes/route'
 import type { HaIntegrations, HaApps, HaSystem, HaBackups, HaHacs } from '@/app/api/cloud/homeassistant/route'
-import type { MetricPoint } from '@/lib/metricsHistory'
+import type { DockerInfo, DockerContainer } from '@/app/api/cloud/docker/route'
+import { formatBytes } from '@/lib/format'
 
 const REFRESH = 30_000
+
+interface MetricPoint {
+  ts: number
+  values: Record<string, number | null>
+}
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -15,6 +22,14 @@ const fetcher = (url: string) =>
   })
 
 const CHART_COLORS = ['#f97316', '#60a5fa', '#34d399', '#a78bfa', '#f472b6', '#facc15']
+
+const SUB_TABS = ['kubernetes', 'homeassistant', 'docker'] as const
+type SubTab = (typeof SUB_TABS)[number]
+const SUB_TAB_LABEL: Record<SubTab, string> = {
+  kubernetes: 'Kubernetes',
+  homeassistant: 'Home Assistant',
+  docker: 'Docker',
+}
 
 interface KubernetesData {
   ok: boolean
@@ -40,12 +55,40 @@ interface HomeAssistantData {
   hostMetricsHistory?: MetricPoint[]
 }
 
+interface DockerData {
+  ok: boolean
+  error?: string
+  info?: DockerInfo | null
+  infoError?: string
+  containers?: DockerContainer[] | null
+  containersError?: string
+  hostMetricsHistory?: MetricPoint[]
+}
+
 export default function CloudAppsTab() {
+  const [subTab, setSubTab] = useState<SubTab>('kubernetes')
+
   const { data: k8s } = useSWR<KubernetesData>('/api/cloud/kubernetes', fetcher, { refreshInterval: REFRESH })
   const { data: ha } = useSWR<HomeAssistantData>('/api/cloud/homeassistant', fetcher, { refreshInterval: REFRESH })
+  const { data: docker } = useSWR<DockerData>('/api/cloud/docker', fetcher, { refreshInterval: REFRESH })
 
   return (
-    <div className="space-y-6">
+    <div>
+      <div className="flex gap-1 mb-6 border-b border-gray-800">
+        {SUB_TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setSubTab(t)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              subTab === t ? 'border-blue-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {SUB_TAB_LABEL[t]}
+          </button>
+        ))}
+      </div>
+
+      {subTab === 'kubernetes' && (
       <Section title="Kubernetes">
         {!k8s ? (
           <Loading />
@@ -199,7 +242,9 @@ export default function CloudAppsTab() {
           </div>
         )}
       </Section>
+      )}
 
+      {subTab === 'homeassistant' && (
       <Section title="Home Assistant">
         {!ha ? (
           <Loading />
@@ -396,6 +441,97 @@ export default function CloudAppsTab() {
           </div>
         )}
       </Section>
+      )}
+
+      {subTab === 'docker' && (
+      <Section title="Docker">
+        {!docker ? (
+          <Loading />
+        ) : !docker.ok ? (
+          <NotReachable detail={docker.error} />
+        ) : (
+          <div className="space-y-5">
+            <SubSection title="Host">
+              {!docker.info ? (
+                <div className="text-sm">
+                  <p className="text-gray-500">Not available</p>
+                  {docker.infoError && <p className="text-gray-600 text-xs mt-1 font-mono">{docker.infoError}</p>}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <Stat label="Version" value={docker.info.version} />
+                  <Stat label="OS" value={docker.info.os} />
+                  <Stat label="Arch" value={docker.info.arch} />
+                  <Stat label="CPUs" value={docker.info.cpus} />
+                  <Stat label="Memory" value={docker.info.memTotal ? formatBytes(docker.info.memTotal) : undefined} />
+                  <Stat label="Running" value={docker.info.containersRunning} />
+                  <Stat label="Stopped" value={docker.info.containersStopped} warn={docker.info.containersStopped > 0} />
+                  <Stat label="Images" value={docker.info.images} />
+                </div>
+              )}
+              {!!docker.hostMetricsHistory?.length && (
+                <div className="mt-4">
+                  <p className="text-gray-500 text-xs mb-2">Host CPU &amp; Memory (%)</p>
+                  <MetricsChart
+                    points={docker.hostMetricsHistory}
+                    series={[
+                      { key: 'cpu', name: 'CPU', color: '#f97316' },
+                      { key: 'mem', name: 'Memory', color: '#a78bfa' },
+                    ]}
+                  />
+                </div>
+              )}
+            </SubSection>
+
+            <SubSection title="Containers">
+              {!docker.containers?.length ? (
+                <div className="text-sm">
+                  <p className="text-gray-500">Not available</p>
+                  {docker.containersError && <p className="text-gray-600 text-xs mt-1 font-mono">{docker.containersError}</p>}
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-500 text-xs border-b border-gray-800">
+                      <th className="text-left pb-2 font-normal">Name</th>
+                      <th className="text-left pb-2 font-normal">Image</th>
+                      <th className="text-left pb-2 font-normal">State</th>
+                      <th className="text-left pb-2 font-normal">Status</th>
+                      <th className="text-left pb-2 font-normal">Ports</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800/50">
+                    {docker.containers.map((c) => (
+                      <tr key={c.id}>
+                        <td className="py-2 pr-3 text-white font-medium">{c.name}</td>
+                        <td className="py-2 pr-3 text-gray-300 font-mono text-xs">{c.image}</td>
+                        <td className="py-2 pr-3">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full border ${
+                              c.state === 'running'
+                                ? 'bg-green-900/40 text-green-300 border-green-700'
+                                : c.state === 'exited' || c.state === 'dead'
+                                  ? 'bg-red-900/40 text-red-300 border-red-700'
+                                  : c.state === 'restarting'
+                                    ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700'
+                                    : 'bg-gray-800 text-gray-400 border-gray-700'
+                            }`}
+                          >
+                            {c.state}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-3 text-gray-500 text-xs">{c.status}</td>
+                        <td className="py-2 pr-3 text-gray-300 font-mono text-xs">{c.ports.join(', ') || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </SubSection>
+          </div>
+        )}
+      </Section>
+      )}
     </div>
   )
 }

@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ReferenceArea, Legend,
 } from 'recharts'
-import type { HistoryPoint } from '@/lib/history'
+import type { HistoryPoint } from '@/app/api/isp/history/route'
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {

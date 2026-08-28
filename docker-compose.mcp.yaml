@@ -1,6 +1,7 @@
-# Dedicated stack for the MCP servers backing the live-home-page dashboard's
-# live Cloud Apps tab. Meant to run on docker-server (192.168.50.3), not on a
-# dev machine — the app's own MCP_*_URL env vars point at MCP_HOST (see .env).
+# Dedicated stack for the MCP servers (and docker-socket-proxy) backing the
+# live-home-page dashboard's live Platforms Monitor tab. Meant to run on
+# docker-server (192.168.50.3), not on a dev machine — the app's own
+# MCP_*_URL/DOCKER_API_URL env vars point at MCP_HOST (see .env).
 #
 # Usage (on docker-server, from the directory holding this file and a
 # `kubeconfig` file with read access to the cluster):
@@ -12,6 +13,19 @@
 # to it per-request with its own MCP_GITHUB_TOKEN.
 
 services:
+  docker-socket-proxy:
+    container_name: docker-socket-proxy
+    image: tecnativa/docker-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      POST: 0
+      INFO: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "2375:2375"
+
   ha-mcp:
     container_name: ha-mcp
     image: ghcr.io/homeassistant-ai/ha-mcp:latest
