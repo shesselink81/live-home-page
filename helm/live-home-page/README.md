@@ -154,7 +154,6 @@ helm upgrade live-home-page . \
   --set db.name=unifi_metrics
 ```
 
-
 No PVC, Deployment, or Service is created for `db` when `db.enabled: false`.
 
 ## Using SSO behind a proxy
