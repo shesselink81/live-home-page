@@ -59,10 +59,6 @@ spec:
                   key: dashboard-token
                   optional: true
             {{- end }}
-            {{- if or .Values.mcp.kubernetesUrl .Values.mcp.host }}
-            - name: MCP_KUBERNETES_URL
-              value: {{ (.Values.mcp.kubernetesUrl | default (printf "http://%s:8087/mcp" .Values.mcp.host)) | quote }}
-            {{- end }}
             {{- if or .Values.mcp.githubUrl .Values.mcp.host }}
             - name: MCP_GITHUB_URL
               value: {{ (.Values.mcp.githubUrl | default (printf "http://%s:8082/mcp" .Values.mcp.host)) | quote }}
@@ -75,10 +71,11 @@ spec:
                   key: mcp-github-token
                   optional: true
             {{- end }}
-            {{- if or .Values.mcp.homeassistantUrl .Values.mcp.host }}
-            - name: MCP_HOMEASSISTANT_URL
-              value: {{ (.Values.mcp.homeassistantUrl | default (printf "http://%s:8086/mcp" .Values.mcp.host)) | quote }}
-            {{- end }}
+            # Backend owns ISP/Kubernetes/Home Assistant/Docker polling +
+            # history (see backend.* values) — reachable only over its
+            # ClusterIP Service, never exposed outside the cluster.
+            - name: BACKEND_URL
+              value: {{ printf "http://%s:%d" (include "live-home-page.backendFullname" .) (.Values.backend.service.port | int) | quote }}
             {{- if .Values.network.allowedNetworks }}
             - name: ALLOWED_NETWORKS
               value: {{ .Values.network.allowedNetworks | quote }}

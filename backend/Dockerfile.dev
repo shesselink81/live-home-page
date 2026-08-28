@@ -1,8 +1,7 @@
-FROM dhi.io/node:26-alpine-dev
+FROM node:26-alpine
 WORKDIR /app
 COPY package.json ./
 RUN npm install
 COPY . .
-#USER node
-EXPOSE 4000
+EXPOSE 4100
 CMD ["npm", "run", "dev"]

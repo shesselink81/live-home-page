@@ -1,6 +1,6 @@
 services:
   monitor:
-    build: 
+    build:
      context: ./app
      dockerfile: Dockerfile
     image: ghcr.io/shesselink81/live-home-page:v${VERSION}
@@ -16,7 +16,61 @@ services:
       UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
       UNIFI_CLOUD_URL: https://api.ui.com
       UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
-      MCP_KUBERNETES_URL: ${MCP_KUBERNETES_URL:-http://${MCP_HOST:-192.168.1.1}:8087/mcp}
       MCP_GITHUB_URL: ${MCP_GITHUB_URL:-http://${MCP_HOST:-192.168.1.1}:8082/mcp}
       MCP_GITHUB_TOKEN: ${MCP_GITHUB_TOKEN}
+      # Backend owns ISP/Kubernetes/Home Assistant/Docker polling + history —
+      # reachable only over the compose network, no published port.
+      BACKEND_URL: http://backend:4100
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ghcr.io/shesselink81/live-home-page-backend:v${VERSION}
+    # No published port — internal-only, reachable only from `monitor` over
+    # the compose network (see backend/README-equivalent comment in server.ts).
+    env_file: .env
+    environment:
+      UNIFI_LOCAL_URL: https://${UNIFI_LOCAL_IP}/proxy/network
+      UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
+      UNIFI_CLOUD_URL: https://api.ui.com
+      UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
+      MCP_KUBERNETES_URL: ${MCP_KUBERNETES_URL:-http://${MCP_HOST:-192.168.1.1}:8087/mcp}
       MCP_HOMEASSISTANT_URL: ${MCP_HOMEASSISTANT_URL:-http://${MCP_HOST:-192.168.1.1}:8086/mcp}
+      DOCKER_API_URL: ${DOCKER_API_URL:-tcp://${MCP_HOST:-192.168.1.1}:2375}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-unifi}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-unifi_metrics}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4100/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11
+    # No published port — internal-only, reachable only from `backend`.
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-unifi_metrics}
+      MARIADB_USER: ${DB_USER:-unifi}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_RANDOM_ROOT_PASSWORD: 1
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
+
+volumes:
+  db-data:

@@ -16,6 +16,15 @@ jobs:
     permissions:
       contents: write
       packages: write
+    strategy:
+      matrix:
+        include:
+          - name: frontend
+            context: ./app
+            image: ${{ github.repository }}
+          - name: backend
+            context: ./backend
+            image: ${{ github.repository }}-backend
 
     steps:
       - name: Checkout
@@ -38,18 +47,18 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./app
+          context: ${{ matrix.context }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
       - name: Create artifact (example)
         run: |
@@ -59,9 +68,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
+          name: build-output-${{ matrix.name }}
           path: output/
-          
+
   release:
       name: Create GitHub Release
       needs: build
@@ -74,7 +83,8 @@ jobs:
         - name: Download build artifacts
           uses: actions/download-artifact@v4
           with:
-            name: build-output
+            pattern: build-output-*
+            merge-multiple: true
             path: release/
 
         - name: Create GitHub Release

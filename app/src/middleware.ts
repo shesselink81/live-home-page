@@ -26,11 +26,18 @@ function isInCidr(ip: string, cidr: string): boolean {
 
 const LOOPBACK = new Set(['::1', '127.0.0.1'])
 
+// Node reports IPv4 clients on a dual-stack socket as IPv4-mapped IPv6
+// (e.g. "::ffff:172.19.0.1" for the Docker bridge gateway on Windows/Mac
+// Docker Desktop) — strip the prefix so CIDR/loopback checks below still work.
+function normalizeIp(ip: string): string {
+  return ip.replace(/^::ffff:/i, '')
+}
+
 function clientIp(req: NextRequest): string | null {
   const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0].trim()
+  if (forwarded) return normalizeIp(forwarded.split(',')[0].trim())
   const real = req.headers.get('x-real-ip')
-  return real?.trim() ?? null
+  return real ? normalizeIp(real.trim()) : null
 }
 
 /** LAN/VPN restriction — always applies first, including to the sign-in flow itself. */

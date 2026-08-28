@@ -1,6 +1,6 @@
 services:
   monitor:
-    build: 
+    build:
      context: ./app
      dockerfile: Dockerfile.dev
     image: ghcr.io/shesselink81/live-home-page:v${VERSION}-dev
@@ -15,10 +15,9 @@ services:
       UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
       UNIFI_CLOUD_URL: https://api.ui.com
       UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
-      MCP_KUBERNETES_URL: ${MCP_KUBERNETES_URL:-http://${MCP_HOST:-192.168.1.1}:8087/mcp}
       MCP_GITHUB_URL: ${MCP_GITHUB_URL:-http://${MCP_HOST:-192.168.1.1}:8082/mcp}
       MCP_GITHUB_TOKEN: ${MCP_GITHUB_TOKEN}
-      MCP_HOMEASSISTANT_URL: ${MCP_HOMEASSISTANT_URL:-http://${MCP_HOST:-192.168.1.1}:8086/mcp}
+      BACKEND_URL: http://backend:4100
     volumes:
       - ./app/src:/app/src
       - ./app/public:/app/public
@@ -27,3 +26,56 @@ services:
         - action: sync
           path: ./app/src
           target: /app/src
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    image: ghcr.io/shesselink81/live-home-page-backend:v${VERSION}-dev
+    env_file: .env
+    environment:
+      UNIFI_LOCAL_URL: https://${UNIFI_LOCAL_IP}/proxy/network
+      UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
+      UNIFI_CLOUD_URL: https://api.ui.com
+      UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
+      MCP_KUBERNETES_URL: ${MCP_KUBERNETES_URL:-http://${MCP_HOST:-192.168.1.1}:8087/mcp}
+      MCP_HOMEASSISTANT_URL: ${MCP_HOMEASSISTANT_URL:-http://${MCP_HOST:-192.168.1.1}:8086/mcp}
+      DOCKER_API_URL: ${DOCKER_API_URL:-tcp://${MCP_HOST:-192.168.1.1}:2375}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-unifi}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-unifi_metrics}
+    volumes:
+      - ./backend/src:/app/src
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/src
+          target: /app/src
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-unifi_metrics}
+      MARIADB_USER: ${DB_USER:-unifi}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_RANDOM_ROOT_PASSWORD: 1
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - db-data-dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
+
+volumes:
+  db-data-dev:

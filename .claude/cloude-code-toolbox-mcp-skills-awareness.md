@@ -1,6 +1,6 @@
 # Cloude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-08-23T00:51:51.880Z_
+_Generated: 2026-08-28T10:43:56.565Z_
 
 ## How to use this report
 
@@ -15,9 +15,12 @@ _Generated: 2026-08-23T00:51:51.880Z_
 
 Workspace `mcp.json` _(folder: unifi-ai)_
 
-- **d:\Users\Sander\repos\unifi-ai\.mcp.json** — _File missing_
+- **d:\Users\Sander\repos\unifi-ai\.mcp.json** — _File exists — servers defined_
 
-_No active workspace servers in mcp.json._
+| Server id | Kind | Detail |
+|-----------|------|--------|
+| unifi Local | stdio | unifi-mcp-server |
+| unifi Cloud | stdio | unifi-mcp-server |
 
 ## MCP — user profile
 

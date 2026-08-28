@@ -1,4 +1,4 @@
-$version="1.2.8" # --- UPDATE THIS VERSION NUMBER ---
+$version="2.0.0" # --- UPDATE THIS VERSION NUMBER ---
 
 # Update .env so docker compose picks up the new version locally
 $envFile = Join-Path $PSScriptRoot ".env"

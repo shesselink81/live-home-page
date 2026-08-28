@@ -40,21 +40,63 @@ unifi:
   # Optional bearer token for /api/* routes (leave empty to disable)
   dashboardToken: ""
 
-# Optional: live Cloud Apps tab (MCP servers). Each source is independent —
-# leave a URL empty to show a "not reachable" state for that source. None of
-# these servers' own credentials are stored here; githubToken is the only
-# secret this chart holds, stored the same way as the UniFi API keys above.
+# Optional: live Platforms Monitor tab (MCP servers + Docker Engine API).
+# Each source is independent — leave a URL empty to show a "not reachable"
+# state for that source. None of these servers' own credentials are stored
+# here; githubToken is the only secret this chart holds, stored the same way
+# as the UniFi API keys above.
 #
 # host is a shortcut: when a specific *Url below is empty, its URL is built
 # from host (http://<host>:<port>/mcp — kubernetesUrl:8087, githubUrl:8082,
-# homeassistantUrl:8086). Set an individual *Url instead if a source lives
-# somewhere other than host.
+# homeassistantUrl:8086; dockerApiUrl:2375, tcp:// not http://). Set an
+# individual *Url instead if a source lives somewhere other than host.
+#
+# githubUrl/githubToken are read by the monitor pod (the GitHub tab stays
+# there); kubernetesUrl/homeassistantUrl/dockerApiUrl are read by the backend
+# pod (see backend.* below), which owns their polling + history.
 mcp:
   host: ""
   kubernetesUrl: ""
   githubUrl: ""
   githubToken: ""
   homeassistantUrl: ""
+  dockerApiUrl: ""
+
+# Backend service (see backend/) — owns ISP/Kubernetes/Home Assistant/Docker
+# polling and history, storing it in MariaDB (see db.* below) instead of
+# losing it on every pod restart. Deployed as its own pod; the monitor pod
+# reaches it over its ClusterIP Service (no Ingress/HTTPRoute — never
+# reachable from outside the cluster).
+backend:
+  image:
+    repository: ghcr.io/shesselink81/live-home-page-backend
+    tag: ""  # defaults to Chart.appVersion
+    pullPolicy: IfNotPresent
+  service:
+    port: 4100
+  resources: {}
+
+# MariaDB storing the backend's metric/chart history. Bundled as a
+# single-replica Deployment + PVC by default (mirrors docker-compose.yaml's
+# `db` service — no clustering, so a full StatefulSet isn't needed for one
+# replica). Set enabled: false to use an external MariaDB/MySQL server
+# instead, pointing host/port at it.
+db:
+  enabled: true
+  host: ""     # required when enabled: false; ignored (uses the in-cluster Service) when true
+  port: 3306
+  user: unifi
+  # Stored in the same Secret as the UniFi API keys above (or in
+  # unifi.existingSecret, key `db-password`, if that's set instead).
+  password: ""
+  name: unifi_metrics
+  image:
+    repository: mariadb
+    tag: "11"
+  storage:
+    size: 2Gi
+    storageClassName: ""
+  resources: {}
 
 # Optional: restrict the whole app (pages + /api/*) to specific CIDRs, see
 # app/src/middleware.ts. Leave empty to allow only loopback — nothing else
