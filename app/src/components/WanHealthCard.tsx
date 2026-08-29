@@ -1,4 +1,5 @@
 import type { WanHealth } from '@/lib/unifi'
+import { formatUptime } from '@/lib/format'
 
 interface Props { data: WanHealth | null; error?: string }
 
@@ -10,7 +11,23 @@ export default function WanHealthCard({ data, error }: Props) {
   const packetLoss  = data.issues.some((i) => i.packetLoss)
   const wanDowntime = data.issues.some((i) => i.wanDowntime)
   const hasIssues   = highLatency || packetLoss || wanDowntime
-  const uptimeColor = data.wanUptime >= 99.9 ? 'text-green-400' : data.wanUptime >= 99 ? 'text-yellow-400' : 'text-red-400'
+
+  // The cloud API's wanUptime percentage has been observed stuck at 0
+  // despite a healthy WAN — this is instead computed from our own poll
+  // history (backend/src/history.ts), independent of that broken field.
+  // Windows shorter than ~23h just mean the app hasn't been running that
+  // long yet; the label reflects the actual window until it fills in.
+  const uptimePercent = data.wanUptimePercent24h
+  const uptimeLabel = uptimePercent === null
+    ? 'WAN Uptime'
+    : data.wanUptimeWindowMs < 23 * 60 * 60 * 1000
+      ? `WAN Uptime (${formatUptime(Math.round(data.wanUptimeWindowMs / 1000))})`
+      : 'WAN Uptime (24h)'
+  const uptimeValue = uptimePercent === null ? '—' : `${uptimePercent.toFixed(2)}%`
+  const uptimeColor = uptimePercent === null
+    ? 'text-gray-500'
+    : uptimePercent >= 99.9 ? 'text-green-400' : uptimePercent >= 99 ? 'text-yellow-400' : 'text-red-400'
+  const uptimeSub = data.wanUptimeSeconds !== null ? `up ${formatUptime(data.wanUptimeSeconds)}` : undefined
 
   return (
     <Card>
@@ -27,7 +44,7 @@ export default function WanHealthCard({ data, error }: Props) {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Stat label="WAN Uptime" value={`${data.wanUptime.toFixed(2)}%`} valueClass={uptimeColor} />
+        <Stat label={uptimeLabel} value={uptimeValue} valueClass={uptimeColor} sub={uptimeSub} />
         <Stat label="Avg Latency" value={data.latencyAvgMs !== null ? `${data.latencyAvgMs} ms` : '—'} />
         <Stat label="Max Latency" value={data.latencyMaxMs !== null ? `${data.latencyMaxMs} ms` : '—'} />
       </div>
@@ -55,11 +72,12 @@ function Card({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Stat({ label, value, valueClass = 'text-white' }: { label: string; value: string; valueClass?: string }) {
+function Stat({ label, value, valueClass = 'text-white', sub }: { label: string; value: string; valueClass?: string; sub?: string }) {
   return (
     <div className="bg-gray-800 rounded-lg p-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       <p className={`font-semibold text-sm ${valueClass}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
     </div>
   )
 }

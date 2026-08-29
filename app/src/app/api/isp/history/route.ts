@@ -9,6 +9,11 @@ export interface HistoryPoint {
   packetLoss: boolean
   highLatency: boolean
   wanDowntime: boolean
+  wanUp: boolean
+  // Rolling uptime % over a trailing window ending at this point — see
+  // backend/src/history.ts. Replaces wanUptime for charting since the cloud
+  // API's wanUptime has been observed stuck at 0 despite a healthy WAN.
+  wanUpPct: number | null
   wanTxBytes: number | null
   wanRxBytes: number | null
   gatewayCpu: number | null

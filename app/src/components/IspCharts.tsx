@@ -22,7 +22,7 @@ interface ChartPoint {
   ts: number
   latencyAvg: number | null
   latencyMax: number | null
-  wanUptime: number
+  wanUpPct: number | null
   hasIssue: boolean
 }
 
@@ -36,7 +36,7 @@ export default function IspCharts() {
     ts: p.ts,
     latencyAvg: p.latencyAvg,
     latencyMax: p.latencyMax,
-    wanUptime: Number(p.wanUptime.toFixed(3)),
+    wanUpPct: p.wanUpPct !== null ? Number(p.wanUpPct.toFixed(3)) : null,
     hasIssue: p.packetLoss || p.highLatency || p.wanDowntime,
   }))
 
@@ -111,7 +111,7 @@ export default function IspCharts() {
 
           {/* WAN uptime chart */}
           <div>
-            <p className="text-xs text-gray-500 mb-3">WAN Uptime (%)</p>
+            <p className="text-xs text-gray-500 mb-3">WAN Uptime (%, 15 min rolling)</p>
             <ResponsiveContainer width="100%" height={120}>
               <LineChart data={points} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
@@ -132,8 +132,8 @@ export default function IspCharts() {
                   />
                 ))}
                 <Line
-                  type="monotone" dataKey="wanUptime" name="Uptime"
-                  stroke="#818cf8" dot={false} strokeWidth={1.5}
+                  type="monotone" dataKey="wanUpPct" name="Uptime"
+                  stroke="#818cf8" dot={false} strokeWidth={1.5} connectNulls
                 />
               </LineChart>
             </ResponsiveContainer>
