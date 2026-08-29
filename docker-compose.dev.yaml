@@ -18,6 +18,7 @@ services:
       MCP_GITHUB_URL: ${MCP_GITHUB_URL:-http://${MCP_HOST:-192.168.1.1}:8082/mcp}
       MCP_GITHUB_TOKEN: ${MCP_GITHUB_TOKEN}
       BACKEND_URL: http://backend:4100
+      APP_TITLE: ${APP_TITLE:-Live Home Page}
     volumes:
       - ./app/src:/app/src
       - ./app/public:/app/public

@@ -21,6 +21,7 @@ services:
       # Backend owns ISP/Kubernetes/Home Assistant/Docker polling + history —
       # reachable only over the compose network, no published port.
       BACKEND_URL: http://backend:4100
+      APP_TITLE: ${APP_TITLE:-Live Home Page}
     depends_on:
       - backend
 

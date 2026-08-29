@@ -3,7 +3,7 @@ name: live-home-page
 description: Live Monitoring App with Unifi Network, HA and K8s monitoring
 type: application
 version: 1.4.1
-appVersion: v2.0.0
+appVersion: v2.0.1
 home: https://github.com/shesselink81/live-home-page
 sources:
   - https://github.com/shesselink81/live-home-page
