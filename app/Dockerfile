@@ -1,8 +1,9 @@
+# syntax=docker/dockerfile:1
 FROM node:26-alpine AS builder
 WORKDIR /app
-COPY package.json ./
-RUN npm install && chown -R node:node /app
-COPY --chown=node:node . .
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
+COPY . .
 RUN npm run build && mkdir -p /app/public
 
 FROM node:26-alpine AS runner

@@ -73,6 +73,21 @@ otherwise db.host (an external server).
 {{- end }}
 {{- end }}
 
+{{/*
+Comma-separated Traefik middleware refs (namespace-name@kubernetescrd), built
+from traefik.middlewares, for the Ingress router.middlewares annotation.
+namespace defaults to the release namespace when a middleware entry omits it.
+*/}}
+{{- define "live-home-page.traefikMiddlewaresAnnotation" -}}
+{{- $root := . -}}
+{{- $refs := list -}}
+{{- range .Values.traefik.middlewares -}}
+{{- $ns := .namespace | default $root.Release.Namespace -}}
+{{- $refs = append $refs (printf "%s-%s@kubernetescrd" $ns .name) -}}
+{{- end -}}
+{{- join "," $refs -}}
+{{- end -}}
+
 {{- define "live-home-page.localUrl" -}}
 {{- if .Values.unifi.localUrl }}
 {{- .Values.unifi.localUrl }}

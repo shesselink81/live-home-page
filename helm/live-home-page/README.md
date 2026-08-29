@@ -79,6 +79,7 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `db.storage.size` | `2Gi` | Bundled MariaDB PVC size |
 | `db.storage.storageClassName` | `""` | Bundled MariaDB PVC StorageClass; empty uses the cluster default |
 | `db.resources` | `{}` | Bundled MariaDB pod resource requests/limits |
+| `network.allowedNetworks` | `""` | Comma-separated CIDRs allowed to reach the whole app (pages + `/api/*`), see `app/src/middleware.ts`. Empty disables this check entirely — rely on `sso.*`/`unifi.dashboardToken`/an ingress-level allowlist instead |
 | `service.type` | `ClusterIP` | monitor Kubernetes Service type |
 | `service.port` | `4000` | monitor Service port |
 | `ingress.enabled` | `false` | Enable Ingress |
@@ -89,6 +90,7 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `httpRoute.enabled` | `false` | Enable Gateway API HTTPRoute |
 | `httpRoute.parentRefs` | `[]` | Gateway parentRefs (see below) |
 | `httpRoute.hostnames` | `[]` | Hostnames to match; omit to match all |
+| `traefik.middlewares` | `[]` | Traefik `Middleware` CRD refs to attach to the exposed route (see [Attaching Traefik middleware](#attaching-traefik-middleware)) |
 | `resources` | `{}` | Pod resource requests/limits |
 | `podSecurityContext` | non-root 1000:1000 | Pod-level security context |
 | `securityContext` | drop ALL caps | Container-level security context |
@@ -123,6 +125,34 @@ helm upgrade live-home-page . \
 ```
 
 `parentRefs[].namespace` and `parentRefs[].sectionName` are optional.
+
+## Attaching Traefik middleware
+
+If your cluster's ingress controller / Gateway API provider is
+[Traefik](https://doc.traefik.io/traefik/), you can attach existing
+`Middleware` CRDs (auth, rate-limiting, redirects, header manipulation, …) to
+this app's route. The chart only references middleware by name — it doesn't
+create `Middleware` resources itself, so define them separately first.
+
+```sh
+helm upgrade live-home-page . \
+  --set ingress.enabled=true \
+  --set ingress.className=traefik \
+  --set traefik.middlewares[0].name=my-middleware \
+  --set traefik.middlewares[0].namespace=traefik
+```
+
+With `ingress.enabled`, this renders as the
+`traefik.ingress.kubernetes.io/router.middlewares` annotation
+(`<namespace>-<name>@kubernetescrd`), so `namespace` can point at a
+middleware in any namespace.
+
+With `httpRoute.enabled` instead, each entry renders as an `ExtensionRef`
+filter referencing the `traefik.io/v1alpha1` `Middleware` kind. Traefik's
+Gateway API provider only resolves these within the HTTPRoute's own
+namespace (no cross-namespace refs without a `ReferenceGrant`), so
+`namespace` is ignored in that case — the `Middleware` must live in this
+release's namespace.
 
 ## Using an existing Secret
 
