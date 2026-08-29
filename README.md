@@ -1,204 +1,109 @@
-# live-home-page
+# live-home-page Helm chart
 
-Live Monitoring App with Unifi Network, HA and K8s monitoring
+Deploys the [live-home-page](https://github.com/shesselink81/live-home-page) monitoring dashboard on Kubernetes.
 
-## What's inside
+## Architecture
 
-| Component | Description | Port |
-|-----------|-------------|------|
-| **monitor** | Next.js dashboard (UniFi health, live Kubernetes/Docker/GitHub/Home Assistant data, optional SSO) | 4000 |
-| **backend** | Polls ISP/Kubernetes/Home Assistant/Docker on its own timers — independent of any open browser tab — and persists history to MariaDB. Internal-only, never exposed outside the compose/cluster network | 4100 (internal) |
-| **db** | MariaDB storing the backend's metric/chart history, so it survives restarts and redeploys. Internal-only | 3306 (internal) |
+Three pods, one Helm release:
 
-## Features
-
-Four auto-refreshing tabs, all in one single-page dashboard:
-
-### Home
-
-- Quick-launch tiles for your own links, grouped by title, fully configurable via env vars (no rebuild needed) — see [Installation step 4](#4-optional-home-tab-links)
-- A live GitHub repositories list (pulled through `github-mcp-server`)
-
-### Network Monitor (Unifi)
-
-- WAN/ISP health — ISP name, uptime %, latency, active issues
-- Infrastructure devices — gateway/switch/AP status, firmware, TX/RX, CPU + memory usage bars
-- Active clients — name, IP, VLAN, connection type, signal, TX/RX
-- ISP history charts — latency (avg + rolling max) and WAN uptime over the last ~2 hours
-- Gateway history charts — WAN upload/download throughput and gateway CPU/memory % over the last ~2 hours
-
-### Network Topology (Unifi)
-
-Live tree view: Internet → gateway → switches/APs → clients.
-
-### Platforms Monitor
-
-Three sub-tabs — Kubernetes, Home Assistant, Docker — each pulling live data through the **backend** service (see [Installation step 3](#3-optional-live-platforms-monitor-tab)), independently of any browser tab being open. Every source degrades independently to "not reachable" if its upstream isn't configured or reachable — the rest of the tab keeps working. History is persisted to MariaDB, so charts survive a container restart or redeploy instead of resetting to empty.
-
-- **Kubernetes** — node CPU/memory table *and* rolling charts, pods not in a healthy state, Flux sources (`GitRepository`/`HelmRepository`), Flux Helm releases with parsed chart/version and Ready status
-- **Home Assistant** — system status (Core/OS/Supervisor/Docker versions, disk usage, pending updates) with a rolling CPU/memory chart for the host, backup status (manager state, last/next scheduled backup), your self-installed integrations (version + up-to-date status, cross-referenced against HACS), installed HACS plugins, and Supervisor add-ons (HAOS/Supervised installs only)
-- **Docker** — host info (version, OS, CPU count, memory) with a rolling host CPU/memory chart, and a live container table (name, image, state, uptime, ports) for a Docker host. Read through a `docker-socket-proxy` (Tecnativa) — the backend never talks to the Docker socket directly
-
-### Cross-cutting
-
-- **Network access control** — the whole app (pages + API) is restricted to `ALLOWED_NETWORKS` (comma-separated CIDRs). Unset = only `localhost` can reach it. Application-level defense-in-depth, not a substitute for a real ingress-level allowlist in production.
-- **Optional Microsoft Entra ID SSO** — layers *on top of* the network restriction above (both must pass, not either/or). Fully optional: disabled entirely unless all three `AUTH_MICROSOFT_ENTRA_ID_*` values are set. Restrict sign-in to specific accounts with `AUTH_ALLOWED_EMAILS`. JWT/in-memory sessions only — no database. See [Installation step 5](#5-optional-microsoft-entra-id-sso).
-- **Optional `DASHBOARD_TOKEN`** — bearer-token protection for `/api/*`, independent of SSO (meant for scripts/automation, not browser use). Still works as a bypass for API callers even when SSO is enabled.
-- **Customizable branding** — `APP_TITLE` overrides the dashboard header and browser tab title (default: "Used IT Tech @ Home").
-- **Persistent history** — ISP/gateway and Platforms Monitor chart history is stored in MariaDB by the **backend** service, surviving container restarts and redeploys instead of resetting to empty.
+- **monitor** — the frontend (Next.js). The only pod with a Service meant to
+  be exposed externally (Ingress/HTTPRoute/NodePort).
+- **backend** — owns ISP/Kubernetes/Home Assistant/Docker polling and
+  history. Talks to UniFi, the MCP servers, and the Docker Engine API
+  directly; the monitor pod reaches it over its ClusterIP Service
+  (`BACKEND_URL`). Never exposed outside the cluster.
+- **db** — MariaDB storing the backend's metric/chart history, so it
+  survives pod restarts. Bundled as a single-replica Deployment + PVC by
+  default (`db.enabled: true`); set `db.enabled: false` and point `db.host`
+  at your own server to use an external MariaDB/MySQL instance instead.
 
 ## Requirements
 
-- Docker with Compose v2
-- A UniFi console/controller reachable on your network
-- A UniFi local API key (optionally also a cloud API key, for `api.ui.com` metrics)
+- Kubernetes 1.25+
+- Helm 3.x
+- A UniFi local API key and cloud API key
+- A `ReadWriteOnce`-capable StorageClass (for the bundled MariaDB PVC), unless `db.enabled=false`
+- (for HTTPRoute) Gateway API CRDs installed and a Gateway resource present
 
-## Installation (Docker Compose)
-
-### 1. Clone and configure
-
-```sh
-git clone https://github.com/shesselink81/live-home-page.git
-cd live-home-page
-cp .env.example .env
-```
-
-Fill in your values in `.env`:
-
-```env
-UNIFI_CLOUD_API_KEY=your-cloud-api-key
-UNIFI_LOCAL_API_KEY=your-local-api-key
-UNIFI_LOCAL_IP=local-ip-of-unifi-controller
-DB_PASSWORD=a-strong-password
-```
-
-> Local API key: UniFi console → Settings → Control Plane → Integrations
-> Cloud API key: [unifi.ui.com](https://unifi.ui.com) → Settings → Control Plane → Integrations
-> `DB_PASSWORD` secures the bundled MariaDB storing chart/metric history (see `db` in [What's inside](#whats-inside)) — `.env.example` ships a `change-me` placeholder, always replace it.
-
-### 2. Allow your network in
-
-By default the app accepts requests from `localhost` only — nothing else can reach it until `ALLOWED_NETWORKS` is set:
-
-```env
-ALLOWED_NETWORKS=192.168.1.0/24
-```
-
-Browsing to it from the same machine that's running Docker Desktop? Also add `172.16.0.0/12` — Docker's own bridge-network range. Published-port traffic arrives at the container looking like it came from Docker's gateway, not `localhost`:
-
-```env
-ALLOWED_NETWORKS=192.168.1.0/24,172.16.0.0/12
-```
-
-### 3. Optional: live Platforms Monitor tab
-
-The Platforms Monitor tab can show live Kubernetes, Home Assistant, and Docker data (plus GitHub on the Home tab), each read by the **backend** service from its own upstream — see [`docker-compose.mcp.yaml`](./docker-compose.mcp.yaml) (meant to run as a dedicated stack, e.g. on a separate docker host) for `kubernetes-mcp-server`, `ha-mcp`, `github-mcp-server`, and `docker-socket-proxy`. Point the app at them:
-
-```env
-MCP_HOST=host.docker.internal
-MCP_GITHUB_TOKEN=your-github-pat
-HOMEASSISTANT_URL=https://your-home-assistant-url
-HOMEASSISTANT_TOKEN=your-home-assistant-long-lived-token
-KUBECONFIG_PATH=./kubeconfig
-```
-
-`MCP_HOST` is used to build `MCP_KUBERNETES_URL`/`MCP_GITHUB_URL`/`MCP_HOMEASSISTANT_URL`/`DOCKER_API_URL` automatically; set any of them individually only if that source lives somewhere other than `MCP_HOST`. The Docker section talks to the Docker Engine remote API through `docker-socket-proxy` (Tecnativa, also defined in `docker-compose.mcp.yaml`) rather than the Docker socket directly — `DOCKER_API_URL` should point at that proxy's `tcp://host:port`, not at Docker itself. Everything else in the app works fine without any of this — the tab just shows "not reachable" per source until it's configured.
-
-### 4. Optional: Home tab links
-
-The dashboard's Home tab shows no links by default. Add your own:
-
-```env
-HOME_LINK_0_TITLE=My links
-HOME_LINK_0_LABEL=Google
-HOME_LINK_0_URL=https://google.com
-HOME_LINK_0_NOTE=Search
-```
-
-Add more with `HOME_LINK_1_*`, `HOME_LINK_2_*`, etc. Entries sharing the same `TITLE` are grouped together on the tab.
-
-### 5. Optional: Microsoft Entra ID SSO
-
-Gate the whole app behind Microsoft sign-in, on top of the network restriction from step 2. Register an app in the Entra admin center (redirect URI: `<your-app-url>/api/auth/callback/microsoft-entra-id`) and set:
-
-```env
-AUTH_MICROSOFT_ENTRA_ID_ID=your-app-registration-client-id
-AUTH_MICROSOFT_ENTRA_ID_SECRET=your-app-registration-client-secret
-AUTH_MICROSOFT_ENTRA_ID_ISSUER=https://login.microsoftonline.com/your-tenant-id/v2.0
-AUTH_SECRET=generate-a-random-value
-AUTH_ALLOWED_EMAILS=you@example.com
-```
-
-> Generate `AUTH_SECRET` with: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
-
-Leave any of the three `AUTH_MICROSOFT_ENTRA_ID_*` values unset to keep SSO fully disabled — the app then behaves exactly as if this section didn't exist. `AUTH_ALLOWED_EMAILS` is optional too; leave it empty to allow any account in the tenant.
-
-### 6. Run
+## Installing
 
 ```sh
-## Start MCP Servers local
-docker compose -f docker-compose.mcp.yaml up -d
-docker compose up -d
-```
-
-Open **http://localhost:4000**.
-
-For local development with hot-reload instead:
-
-```sh
-docker compose -f docker-compose.dev.yaml up -d
-```
-
-See `.env.example` for the full list of options, including `DASHBOARD_TOKEN` (bearer-token protection for `/api/*`) and `APP_TITLE` (rename the dashboard).
-
-## MCP servers (for Claude Code)
-
-Configured in `.mcp.json` (see `.mcp.json.example` for a template). Enable via `/mcp` in Claude Code.
-
-| Server | Type | Purpose |
-|--------|------|---------|
-| `unifi Local` | stdio | UniFi local-controller tools — devices, clients, firewall, DNS, WiFi, … |
-| `unifi Cloud` | stdio | UniFi cloud API tools — `get_isp_metrics`, `list_sites`, `get_site_health_summary` |
-| `Home Assistant` | http | Home Assistant tools — same server the Platforms Monitor tab uses |
-| `kubernetes` | http | Kubernetes cluster tools — same server the Platforms Monitor tab uses |
-| `github` | http | GitHub repository tools — same server the Home tab uses |
-
-## Helm repository
-
-Hosted via GitHub Pages. Add the repo and install:
-
-```sh
-helm repo add live-home-page https://shesselink81.github.io/live-home-page
-helm repo update
-helm install live-home-page live-home-page/live-home-page \
+helm install live-home-page . \
   --set unifi.localIp=192.168.1.1 \
   --set unifi.localApiKey=YOUR_LOCAL_KEY \
   --set unifi.cloudApiKey=YOUR_CLOUD_KEY \
   --set db.password=YOUR_DB_PASSWORD
 ```
 
-## Kubernetes (Helm)
+`db.password` is required whenever the bundled MariaDB is used (the
+default, `db.enabled: true`) — Helm fails fast with a clear error if it's
+left unset, rather than the db pod crash-looping on a missing secret key.
 
-The chart lives in `helm/live-home-page/` and deploys all three components from [What's inside](#whats-inside) — `monitor`, `backend`, and a bundled single-replica `db` (MariaDB) — as one release. `db.password` is required (Helm fails fast with a clear error if it's left unset, rather than the db pod crash-looping on a missing secret key):
-
-```sh
-helm install live-home-page ./helm/live-home-page \
-  --set unifi.localIp=192.168.1.1 \
-  --set unifi.localApiKey=YOUR_LOCAL_KEY \
-  --set unifi.cloudApiKey=YOUR_CLOUD_KEY \
-  --set db.password=YOUR_DB_PASSWORD
-```
-
-Set `db.enabled=false` and `db.host=...` to point at an external MariaDB/MySQL server instead of the bundled one — see `helm/live-home-page/README.md` for details.
-
-Then port-forward or enable an Ingress:
+Then port-forward to verify:
 
 ```sh
-# Quick access
 kubectl port-forward svc/live-home-page 4000:4000
+# open http://localhost:4000
+```
 
-# Ingress (nginx example)
-helm upgrade live-home-page ./helm/live-home-page \
+## Values
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `replicaCount` | `1` | Number of pod replicas |
+| `image.repository` | `ghcr.io/shesselink81/live-home-page` | Container image |
+| `image.tag` | `""` | Image tag; defaults to `Chart.appVersion` |
+| `image.pullPolicy` | `IfNotPresent` | Image pull policy |
+| `host` | `""` | Externally-reachable hostname of this app, e.g. `unifi.example.com` (exposed to the container as `HOST`; also sets `AUTH_URL=https://<host>` when `sso.clientId` is set — see [Using SSO behind a proxy](#using-sso-behind-a-proxy)) |
+| `unifi.localIp` | `192.168.1.1` | IP or hostname of the local UniFi controller |
+| `unifi.localUrl` | `""` | Override full local API URL (constructed from `localIp` when empty) |
+| `unifi.cloudUrl` | `https://api.ui.com` | UniFi cloud API base URL |
+| `unifi.localApiKey` | `""` | Local API key (stored in a Secret) |
+| `unifi.cloudApiKey` | `""` | Cloud API key (stored in a Secret) |
+| `unifi.existingSecret` | `""` | Name of a pre-existing Secret to use instead of the one this chart creates (keys: `local-api-key`, `cloud-api-key`, `dashboard-token`, `mcp-github-token`, `db-password`, `sso-client-secret`, `sso-auth-secret` — populate whichever your config needs) |
+| `unifi.dashboardToken` | `""` | Optional bearer token to protect `/api/*` routes |
+| `mcp.host` | `""` | Shortcut host for building `mcp.kubernetesUrl`/`mcp.githubUrl`/`mcp.homeassistantUrl`/`mcp.dockerApiUrl` when a specific one is left empty |
+| `mcp.kubernetesUrl` / `mcp.homeassistantUrl` / `mcp.dockerApiUrl` | `""` | Read by the **backend** pod (Platforms Monitor tab sources) |
+| `mcp.githubUrl` / `mcp.githubToken` | `""` | Read by the **monitor** pod (GitHub tab stays there) |
+| `backend.image.repository` | `ghcr.io/shesselink81/live-home-page-backend` | Backend container image |
+| `backend.image.tag` | `""` | Backend image tag; defaults to `Chart.appVersion` |
+| `backend.service.port` | `4100` | Backend ClusterIP Service port (internal-only, no Ingress/HTTPRoute) |
+| `backend.resources` | `{}` | Backend pod resource requests/limits |
+| `db.enabled` | `true` | Bundle a single-replica MariaDB Deployment + PVC. Set `false` to use an external server via `db.host` |
+| `db.host` | `""` | External MariaDB/MySQL host; only used when `db.enabled: false` |
+| `db.port` | `3306` | DB port |
+| `db.user` | `unifi` | DB user the backend connects as (never root) |
+| `db.password` | `""` | DB password (stored in a Secret). **Required** when `db.enabled: true` and `unifi.existingSecret` is unset |
+| `db.name` | `unifi_metrics` | Database name |
+| `db.image.repository` / `db.image.tag` | `mariadb` / `11` | Bundled MariaDB image (only used when `db.enabled: true`) |
+| `db.storage.size` | `2Gi` | Bundled MariaDB PVC size |
+| `db.storage.storageClassName` | `""` | Bundled MariaDB PVC StorageClass; empty uses the cluster default |
+| `db.resources` | `{}` | Bundled MariaDB pod resource requests/limits |
+| `network.allowedNetworks` | `""` | Comma-separated CIDRs allowed to reach the whole app (pages + `/api/*`), see `app/src/middleware.ts`. Empty disables this check entirely — rely on `sso.*`/`unifi.dashboardToken`/an ingress-level allowlist instead |
+| `service.type` | `ClusterIP` | monitor Kubernetes Service type |
+| `service.port` | `4000` | monitor Service port |
+| `ingress.enabled` | `false` | Enable Ingress |
+| `ingress.className` | `""` | Ingress class name |
+| `ingress.annotations` | `{}` | Ingress annotations |
+| `ingress.hosts` | see values.yaml | Ingress host/path rules |
+| `ingress.tls` | `[]` | Ingress TLS config |
+| `httpRoute.enabled` | `false` | Enable Gateway API HTTPRoute |
+| `httpRoute.parentRefs` | `[]` | Gateway parentRefs (see below) |
+| `httpRoute.hostnames` | `[]` | Hostnames to match; omit to match all |
+| `traefik.middlewares` | `[]` | Traefik `Middleware` CRD refs to attach to the exposed route (see [Attaching Traefik middleware](#attaching-traefik-middleware)) |
+| `resources` | `{}` | Pod resource requests/limits |
+| `podSecurityContext` | non-root 1000:1000 | Pod-level security context |
+| `securityContext` | drop ALL caps | Container-level security context |
+| `nodeSelector` | `{}` | Node selector |
+| `tolerations` | `[]` | Pod tolerations |
+| `affinity` | `{}` | Pod affinity rules |
+
+## Exposing the dashboard
+
+### Ingress
+
+```sh
+helm upgrade live-home-page . \
   --set ingress.enabled=true \
   --set ingress.className=nginx \
   --set ingress.hosts[0].host=unifi.example.com \
@@ -206,10 +111,12 @@ helm upgrade live-home-page ./helm/live-home-page \
   --set ingress.hosts[0].paths[0].pathType=Prefix
 ```
 
-Use an HTTPRoute (Gateway API) instead of Ingress:
+### Gateway API HTTPRoute
+
+Requires the [Gateway API CRDs](https://gateway-api.sigs.k8s.io/guides/) and an existing `Gateway` resource.
 
 ```sh
-helm upgrade live-home-page ./helm/live-home-page \
+helm upgrade live-home-page . \
   --set httpRoute.enabled=true \
   --set httpRoute.parentRefs[0].name=my-gateway \
   --set httpRoute.parentRefs[0].namespace=gateway \
@@ -217,32 +124,92 @@ helm upgrade live-home-page ./helm/live-home-page \
   --set httpRoute.hostnames[0]=unifi.example.com
 ```
 
-Use `existingSecret` to supply API keys from a pre-created Secret (keys: `local-api-key`, `cloud-api-key`, `db-password`, plus `dashboard-token`/`mcp-github-token`/`sso-client-secret`/`sso-auth-secret` for the optional features above).
+`parentRefs[].namespace` and `parentRefs[].sectionName` are optional.
 
-The chart mirrors every env var described in this README as a `values.yaml` field — see the comments in `helm/live-home-page/values.yaml` for the full list (`appTitle`, `mcp.*`, `backend.*`, `db.*`, `network.allowedNetworks`, `homeLinks.links`, `sso.*`).
+## Attaching Traefik middleware
 
-## Project structure
+If your cluster's ingress controller / Gateway API provider is
+[Traefik](https://doc.traefik.io/traefik/), you can attach existing
+`Middleware` CRDs (auth, rate-limiting, redirects, header manipulation, …) to
+this app's route. The chart only references middleware by name — it doesn't
+create `Middleware` resources itself, so define them separately first.
 
+```sh
+helm upgrade live-home-page . \
+  --set ingress.enabled=true \
+  --set ingress.className=traefik \
+  --set traefik.middlewares[0].name=my-middleware \
+  --set traefik.middlewares[0].namespace=traefik
 ```
-.
-├── app/                     # Next.js frontend
-│   ├── src/
-│   │   ├── app/api/         # API routes — UniFi/GitHub direct, ISP/Kubernetes/Home Assistant/Docker proxy to backend
-│   │   ├── components/      # Dashboard UI components
-│   │   └── lib/             # UniFi API client, MCP client (GitHub), backend proxy fetcher, formatters
-│   ├── Dockerfile           # Production image (multi-stage, standalone build)
-│   ├── Dockerfile.dev       # Dev image (hot-reload)
-│   └── .env.local           # Local env for running app/ directly, not via Docker (not committed)
-├── backend/                 # Polling + history service — ISP/Kubernetes/Home Assistant/Docker, MariaDB-backed
-│   └── src/
-│       ├── collectors/      # One fetch-and-persist function per source
-│       ├── poller.ts        # Timers driving the collectors independently of any browser tab
-│       └── server.ts        # Express — serves the latest cached snapshot + history to the frontend
-├── helm/live-home-page/     # Helm chart for Kubernetes (monitor + backend + db)
-├── docker-compose.yaml      # monitor + backend + db, production
-├── docker-compose.dev.yaml  # monitor + backend + db, dev with hot-reload
-├── docker-compose.mcp.yaml  # Optional: MCP servers + docker-socket-proxy for the Platforms Monitor tab
-├── .mcp.json                # Claude Code MCP config (not committed)
-├── .env.example             # Template — copy to .env and fill in
-└── .env                     # API keys and config (not committed)
+
+With `ingress.enabled`, this renders as the
+`traefik.ingress.kubernetes.io/router.middlewares` annotation
+(`<namespace>-<name>@kubernetescrd`), so `namespace` can point at a
+middleware in any namespace.
+
+With `httpRoute.enabled` instead, each entry renders as an `ExtensionRef`
+filter referencing the `traefik.io/v1alpha1` `Middleware` kind. Traefik's
+Gateway API provider only resolves these within the HTTPRoute's own
+namespace (no cross-namespace refs without a `ReferenceGrant`), so
+`namespace` is ignored in that case — the `Middleware` must live in this
+release's namespace.
+
+## Using an existing Secret
+
+Create the Secret yourself, then reference it. Include `db-password` too if
+`db.enabled` is left at its default (`true`):
+
+```sh
+kubectl create secret generic live-home-page-keys \
+  --from-literal=local-api-key=YOUR_LOCAL_KEY \
+  --from-literal=cloud-api-key=YOUR_CLOUD_KEY \
+  --from-literal=db-password=YOUR_DB_PASSWORD
+
+helm install live-home-page . \
+  --set unifi.localIp=192.168.1.1 \
+  --set unifi.existingSecret=live-home-page-keys
+```
+
+## Using an external database
+
+By default the chart bundles a single-replica MariaDB (see [Architecture](#architecture)).
+To point the backend at your own MariaDB/MySQL server instead:
+
+```sh
+helm upgrade live-home-page . \
+  --set db.enabled=false \
+  --set db.host=mysql.example.com \
+  --set db.user=unifi \
+  --set db.password=YOUR_DB_PASSWORD \
+  --set db.name=unifi_metrics
+```
+
+No PVC, Deployment, or Service is created for `db` when `db.enabled: false`.
+
+## Using SSO behind a proxy
+
+When `sso.clientId` (Entra ID) is set, also set `host` to the app's public
+hostname (matching `httpRoute.hostnames` / `ingress.hosts`):
+
+```sh
+helm upgrade live-home-page . \
+  --set host=unifi.example.com \
+  --set sso.clientId=... \
+  --set sso.clientSecret=... \
+  --set sso.issuer=...
+```
+
+Without `host`, Auth.js falls back to detecting the request host from
+`X-Forwarded-Host`/`Host` headers (`trustHost: true` in `auth.ts`). Behind a
+Gateway API `HTTPRoute` (or any proxy that doesn't forward those headers
+reliably), this can misdetect the pod's own bind address and redirect to
+something like `https://0.0.0.0:4000/api/auth/signin/microsoft-entra-id`
+instead of the public URL. Setting `host` makes the chart set
+`AUTH_URL=https://<host>`, which Auth.js reads directly and skips header-based
+detection entirely.
+
+## Uninstalling
+
+```sh
+helm uninstall live-home-page
 ```
