@@ -2,6 +2,8 @@
 
 Live Monitoring App with Unifi Network, HA and K8s monitoring
 
+[**→ Screenshots**](#screenshots)
+
 ## What's inside
 
 | Component | Description | Port |
@@ -239,6 +241,7 @@ The chart mirrors every env var described in this README as a `values.yaml` fiel
 │       ├── poller.ts        # Timers driving the collectors independently of any browser tab
 │       └── server.ts        # Express — serves the latest cached snapshot + history to the frontend
 ├── helm/live-home-page/     # Helm chart for Kubernetes (monitor + backend + db)
+├── screenshots/             # Dashboard screenshots used in this README
 ├── docker-compose.yaml      # monitor + backend + db, production
 ├── docker-compose.dev.yaml  # monitor + backend + db, dev with hot-reload
 ├── docker-compose.mcp.yaml  # Optional: MCP servers + docker-socket-proxy for the Platforms Monitor tab
@@ -246,3 +249,30 @@ The chart mirrors every env var described in this README as a `values.yaml` fiel
 ├── .env.example             # Template — copy to .env and fill in
 └── .env                     # API keys and config (not committed)
 ```
+
+## Screenshots
+
+<div align="left">
+
+<img src="screenshots/1_home.png" width="800" alt="Home tab" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Home</sub></p>
+
+<img src="screenshots/2_nm1.png" width="800" alt="Network Monitor — WAN health, devices, clients" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Network Monitor — WAN health, devices, clients</sub></p>
+
+<img src="screenshots/3_nm2.png" width="800" alt="Network Monitor — ISP & gateway history charts" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Network Monitor — ISP & gateway history charts</sub></p>
+
+<img src="screenshots/4_nwtop.png" width="800" alt="Network Topology" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Network Topology</sub></p>
+
+<img src="screenshots/5_k8s.png" width="800" alt="Platforms Monitor — Kubernetes" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Platforms Monitor — Kubernetes</sub></p>
+
+<img src="screenshots/6_ha.png" width="800" alt="Platforms Monitor — Home Assistant" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Platforms Monitor — Home Assistant</sub></p>
+
+<img src="screenshots/7_docker.png" width="800" alt="Platforms Monitor — Docker" style="border:1px solid #30363d; border-radius:6px;">
+<p><sub>Platforms Monitor — Docker</sub></p>
+
+</div>
