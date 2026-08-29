@@ -78,6 +78,20 @@ export interface WanHealth {
   isp: IspInfo
   externalIp: string
   wanUptime: number
+  // Continuous-uptime seconds from the local controller (stat/health "www"
+  // subsystem) — the cloud API's wanUptime percentage has been observed
+  // stuck at 0 despite a healthy WAN, so this is used as a fallback display.
+  wanUptimeSeconds: number | null
+  // Best-effort up/down signal for this single poll — prefers the local
+  // controller's own subsystem status (more reliable than the cloud API's
+  // uptime%/issue detection); falls back to the cloud's wanDowntime flag
+  // only when local health couldn't be reached this poll.
+  wanUp: boolean
+  // Rolling uptime % computed from our own poll history (see history.ts) —
+  // getWanHealth() can't compute this itself (no history access), so it's
+  // always overridden by the ISP collector after calling this function.
+  wanUptimePercent24h: number | null
+  wanUptimeWindowMs: number
   latencyAvgMs: number | null
   latencyMaxMs: number | null
   txRetryPct: number | null
@@ -121,7 +135,9 @@ export async function getGateway(): Promise<Device | null> {
 
 interface LocalHealthEntry {
   subsystem: string
+  status?: string
   latency?: number
+  uptime?: number
 }
 
 export async function getWanHealth(): Promise<WanHealth | null> {
@@ -154,11 +170,16 @@ export async function getWanHealth(): Promise<WanHealth | null> {
     : undefined
   const latencyAvgMs = wwwEntry?.latency ?? stats.internetIssues?.find((i) => i.highLatency)?.latencyAvgMs ?? null
   const latencyMaxMs = stats.internetIssues?.find((i) => i.highLatency)?.latencyMaxMs ?? null
+  const wanUp = wwwEntry?.status ? wwwEntry.status === 'ok' : !issues.some((i) => i.wanDowntime)
 
   return {
     isp: stats.ispInfo ?? { asn: 0, name: 'Unknown', organization: 'Unknown' },
     externalIp: stats.wans?.WAN?.externalIp ?? '',
     wanUptime: stats.percentages?.wanUptime ?? 0,
+    wanUptimeSeconds: wwwEntry?.uptime ?? null,
+    wanUp,
+    wanUptimePercent24h: null, // overridden by the ISP collector
+    wanUptimeWindowMs: 0, // overridden by the ISP collector
     txRetryPct: stats.percentages?.txRetry ?? null,
     latencyAvgMs,
     latencyMaxMs,
