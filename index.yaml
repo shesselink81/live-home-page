@@ -3,6 +3,21 @@ entries:
   live-home-page:
   - apiVersion: v2
     appVersion: v2.0.3
+    created: "2026-08-29T19:46:31.570343146Z"
+    description: Live Monitoring App with Unifi Network, HA and K8s monitoring
+    digest: d4ee58885b57fccfaff6f63efe871c23cba2126e973cb4bf48edf2b6dafdade9
+    home: https://github.com/shesselink81/live-home-page
+    maintainers:
+    - name: shesselink81
+    name: live-home-page
+    sources:
+    - https://github.com/shesselink81/live-home-page
+    type: application
+    urls:
+    - https://github.com/shesselink81/live-home-page/releases/download/live-home-page-1.4.5/live-home-page-1.4.5.tgz
+    version: 1.4.5
+  - apiVersion: v2
+    appVersion: v2.0.3
     created: "2026-08-29T18:52:37.148626972Z"
     description: Live Monitoring App with Unifi Network, HA and K8s monitoring
     digest: 7a325997cda0c71addeb5d986e17fff92f497eee1b04f31cee12ac89272e7450
@@ -75,4 +90,214 @@ entries:
     type: application
     urls:
     - https://github.com/shesselink81/live-home-page/releases/download/live-home-page-1.4.0/live-home-page-1.4.0.tgz
+<<<<<<< HEAD
     version: 1.4.0
+=======
+    version: 1.4.0
+  - apiVersion: v2
+    appVersion: v1.2.8
+    created: "2026-08-23T04:39:41.139629227Z"
+    description: Live Monitoring App with Unifi Network, HA and K8s monitoring
+    digest: 9d1b03e5392cad0c738f3b22ef9ef70e26f5bbe302f56c25ed561f88901de3ac
+    home: https://github.com/shesselink81/live-home-page
+    maintainers:
+    - name: shesselink81
+    name: live-home-page
+    sources:
+    - https://github.com/shesselink81/live-home-page
+    type: application
+    urls:
+    - https://github.com/shesselink81/live-home-page/releases/download/live-home-page-1.3.1/live-home-page-1.3.1.tgz
+    version: 1.3.1
+  - apiVersion: v2
+    appVersion: v1.2.8
+    created: "2026-08-23T04:18:19.374992251Z"
+    description: Live Monitoring App with Unifi Network, HA and K8s monitoring
+    digest: 98de51207d001dbbb75a7da365e2132e82d05d32c8f5a1368907e5a80a089474
+    home: https://github.com/shesselink81/live-home-page
+    maintainers:
+    - name: shesselink81
+    name: live-home-page
+    sources:
+    - https://github.com/shesselink81/live-home-page
+    type: application
+    urls:
+    - https://github.com/shesselink81/live-home-page/releases/download/live-home-page-1.3.0/live-home-page-1.3.0.tgz
+    version: 1.3.0
+  - apiVersion: v2
+    appVersion: v1.2.8
+    created: "2026-08-23T03:38:17.78553037Z"
+    description: Live Monitoring App with Unifi Network, HA and K8s monitoring
+    digest: 3b88d7f8baf00843c8fd9a64fe35a55d9487d6b269c3e6269155483c80fc7767
+    home: https://github.com/shesselink81/live-home-page
+    maintainers:
+    - name: shesselink81
+    name: live-home-page
+    sources:
+    - https://github.com/shesselink81/live-home-page
+    type: application
+    urls:
+    - https://github.com/shesselink81/live-home-page/releases/download/live-home-page-1.2.9/live-home-page-1.2.9.tgz
+    version: 1.2.9
+  - apiVersion: v2
+    appVersion: v1.2.8
+    created: "2026-08-22T23:36:15.187949162Z"
+    description: Live Monitoring App with Unifi Network, HA and K8s monitoring
+    digest: 6c9826561813eaab9f46e44c94dfb4d5ecf33204ed72f5ad492b2b8201220285
+    home: https://github.com/shesselink81/live-home-page
+    maintainers:
+    - name: shesselink81
+    name: live-home-page
+    sources:
+    - https://github.com/shesselink81/live-home-page
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/live-home-page-1.2.8/live-home-page-1.2.8.tgz
+    version: 1.2.8
+  unifi-ai:
+  - apiVersion: v2
+    appVersion: v1.2.7
+    created: "2026-08-20T20:29:24.376183026Z"
+    description: UniFi network monitoring dashboard
+    digest: dc665fbb58dba1d7b6d9b58fe90cc9a9a0067594728808dbe84d7d8ef2dea9a0
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.7/unifi-ai-1.2.7.tgz
+    version: 1.2.7
+  - apiVersion: v2
+    appVersion: v1.2.6
+    created: "2026-08-20T20:22:21.440987768Z"
+    description: UniFi network monitoring dashboard
+    digest: a056a7b557ef2da2f913da929acb6fbbb31e1d60395405f92149175a95494232
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.6/unifi-ai-1.2.6.tgz
+    version: 1.2.6
+  - apiVersion: v2
+    appVersion: v1.2.5
+    created: "2026-08-20T20:01:58.011125932Z"
+    description: UniFi network monitoring dashboard
+    digest: 3ca960c1ad8f1c3dbd5dffbb8e8d64954fa988e150a68ea736c32e42208457ed
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.5/unifi-ai-1.2.5.tgz
+    version: 1.2.5
+  - apiVersion: v2
+    appVersion: v1.2.4
+    created: "2026-08-19T14:25:01.824843416Z"
+    description: UniFi network monitoring dashboard
+    digest: c7ec5a344781d3b42324ccec36ff4cd5773cdc76e547eb29c68f018bb236cbca
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.4/unifi-ai-1.2.4.tgz
+    version: 1.2.4
+  - apiVersion: v2
+    appVersion: v1.2.3
+    created: "2026-08-19T11:05:25.657051928Z"
+    description: UniFi network monitoring dashboard
+    digest: 36c7c08e40585a4ef917295f3f1025ffd8bbb5ddf70d71507cce3159f4b8a45e
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.3/unifi-ai-1.2.3.tgz
+    version: 1.2.3
+  - apiVersion: v2
+    appVersion: v1.2.2
+    created: "2026-07-25T22:52:14.30173216Z"
+    description: UniFi network monitoring dashboard
+    digest: 73cc941cb214a6f553e3fabb04d68e313e3c27236b8c5c9cb6113e2ab7c81ba4
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.2/unifi-ai-1.2.2.tgz
+    version: 1.2.2
+  - apiVersion: v2
+    appVersion: v1.2.1
+    created: "2026-05-16T06:25:32.235363169Z"
+    description: UniFi network monitoring dashboard
+    digest: 6fef6dc304a1319fbacaa8f8f0c392c0689b8f42255e1515000cdee3b35271b1
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.1/unifi-ai-1.2.1.tgz
+    version: 1.2.1
+  - apiVersion: v2
+    appVersion: 1.1.9
+    created: "2026-05-16T05:51:24.065643676Z"
+    description: UniFi network monitoring dashboard
+    digest: 68b3509ff31e6d2a488914d88a67a75c6bbc88cec8262dccaf720fe41d036949
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.2.0/unifi-ai-1.2.0.tgz
+    version: 1.2.0
+  - apiVersion: v2
+    appVersion: 1.1.9
+    created: "2026-05-16T05:20:37.331781383Z"
+    description: UniFi network monitoring dashboard
+    digest: 46f2354c857a4f9c921a9cefc63ac81161cbb144142e706a99da338458acee03
+    home: https://github.com/shesselink81/unifi-ai
+    icon: https://raw.githubusercontent.com/unifi-ai/unifi-ai/main/assets/logo.png
+    maintainers:
+    - name: shesselink81
+    name: unifi-ai
+    sources:
+    - https://github.com/shesselink81/unifi-ai
+    type: application
+    urls:
+    - https://github.com/shesselink81/unifi-ai/releases/download/unifi-ai-1.1.9/unifi-ai-1.1.9.tgz
+    version: 1.1.9
+generated: "2026-08-29T19:46:31.570384164Z"
+>>>>>>> ef772ce965f83017792563488506c7e4601a2dc9
