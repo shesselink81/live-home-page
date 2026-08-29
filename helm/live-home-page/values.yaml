@@ -99,8 +99,8 @@ db:
   resources: {}
 
 # Optional: restrict the whole app (pages + /api/*) to specific CIDRs, see
-# app/src/middleware.ts. Leave empty to allow only loopback — nothing else
-# can reach the app until this is set.
+# app/src/middleware.ts. Leave empty to disable this check entirely (rely on
+# sso/dashboardToken/an ingress-level allowlist instead).
 network:
   allowedNetworks: ""
 
@@ -147,6 +147,27 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+# Optional: attach Traefik Middleware CRDs (traefik.io/v1alpha1) to the
+# exposed route — e.g. an auth/rate-limit/redirect middleware you've defined
+# separately (this chart doesn't create Middleware resources, only refs
+# them). Applies to whichever of ingress/httpRoute is enabled above.
+#
+# - With ingress.enabled: rendered as the
+#   traefik.ingress.kubernetes.io/router.middlewares annotation
+#   (<namespace>-<name>@kubernetescrd), so `namespace` can point at a
+#   middleware in any namespace.
+# - With httpRoute.enabled: rendered as an ExtensionRef filter referencing
+#   the traefik.io/v1alpha1 Middleware kind. Traefik's Gateway API provider
+#   only resolves these within the HTTPRoute's own namespace (no
+#   cross-namespace refs without a ReferenceGrant), so `namespace` here is
+#   ignored — the Middleware must live in this release's namespace.
+# - No effect unless the cluster's Traefik is actually the ingress
+#   controller / Gateway API provider in front of this app.
+traefik:
+  middlewares: []
+  # - name: my-middleware
+  #   namespace: traefik   # optional, only used by the Ingress annotation form
 
 # Gateway API HTTPRoute (gateway.networking.k8s.io/v1)
 httpRoute:

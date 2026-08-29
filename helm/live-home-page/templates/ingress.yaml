@@ -5,9 +5,14 @@ metadata:
   name: {{ include "live-home-page.fullname" . }}
   labels:
     {{- include "live-home-page.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  {{- if or .Values.ingress.annotations .Values.traefik.middlewares }}
   annotations:
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.traefik.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ include "live-home-page.traefikMiddlewaresAnnotation" . }}
+    {{- end }}
   {{- end }}
 spec:
   {{- if .Values.ingress.className }}

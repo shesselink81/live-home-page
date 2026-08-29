@@ -27,6 +27,16 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      {{- if .Values.traefik.middlewares }}
+      filters:
+        {{- range .Values.traefik.middlewares }}
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: {{ .name }}
+        {{- end }}
+      {{- end }}
       backendRefs:
         - name: {{ include "live-home-page.fullname" . }}
           port: {{ .Values.service.port }}

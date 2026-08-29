@@ -1,7 +1,8 @@
+# syntax=docker/dockerfile:1
 FROM dhi.io/node:26-alpine-dev
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY . .
 #USER node
 EXPOSE 4000

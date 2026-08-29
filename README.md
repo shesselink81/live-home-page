@@ -41,7 +41,7 @@ Three sub-tabs — Kubernetes, Home Assistant, Docker — each pulling live data
 
 ### Cross-cutting
 
-- **Network access control** — the whole app (pages + API) is restricted to `ALLOWED_NETWORKS` (comma-separated CIDRs). Unset = only `localhost` can reach it. Application-level defense-in-depth, not a substitute for a real ingress-level allowlist in production.
+- **Optional network access control** — the whole app (pages + API) can be restricted to `ALLOWED_NETWORKS` (comma-separated CIDRs). Unset/empty = the IP check is disabled entirely (rely on SSO/`DASHBOARD_TOKEN`/a reverse proxy instead). Application-level defense-in-depth, not a substitute for a real ingress-level allowlist in production.
 - **Optional Microsoft Entra ID SSO** — layers *on top of* the network restriction above (both must pass, not either/or). Fully optional: disabled entirely unless all three `AUTH_MICROSOFT_ENTRA_ID_*` values are set. Restrict sign-in to specific accounts with `AUTH_ALLOWED_EMAILS`. JWT/in-memory sessions only — no database. See [Installation step 5](#5-optional-microsoft-entra-id-sso).
 - **Optional `DASHBOARD_TOKEN`** — bearer-token protection for `/api/*`, independent of SSO (meant for scripts/automation, not browser use). Still works as a bypass for API callers even when SSO is enabled.
 - **Customizable branding** — `APP_TITLE` overrides the dashboard header and browser tab title (default: "Used IT Tech @ Home").
@@ -76,9 +76,9 @@ DB_PASSWORD=a-strong-password
 > Cloud API key: [unifi.ui.com](https://unifi.ui.com) → Settings → Control Plane → Integrations
 > `DB_PASSWORD` secures the bundled MariaDB storing chart/metric history (see `db` in [What's inside](#whats-inside)) — `.env.example` ships a `change-me` placeholder, always replace it.
 
-### 2. Allow your network in
+### 2. Optional: restrict access by network
 
-By default the app accepts requests from `localhost` only — nothing else can reach it until `ALLOWED_NETWORKS` is set:
+By default the app accepts requests from anywhere — set `ALLOWED_NETWORKS` to restrict it to specific CIDRs (rely on SSO/`DASHBOARD_TOKEN`/a reverse proxy instead if you'd rather leave this unset):
 
 ```env
 ALLOWED_NETWORKS=192.168.1.0/24
@@ -219,7 +219,7 @@ helm upgrade live-home-page ./helm/live-home-page \
 
 Use `existingSecret` to supply API keys from a pre-created Secret (keys: `local-api-key`, `cloud-api-key`, `db-password`, plus `dashboard-token`/`mcp-github-token`/`sso-client-secret`/`sso-auth-secret` for the optional features above).
 
-The chart mirrors every env var described in this README as a `values.yaml` field — see the comments in `helm/live-home-page/values.yaml` for the full list (`appTitle`, `mcp.*`, `backend.*`, `db.*`, `network.allowedNetworks`, `homeLinks.links`, `sso.*`).
+The chart mirrors every env var described in this README as a `values.yaml` field — see the comments in `helm/live-home-page/values.yaml` for the full list (`appTitle`, `mcp.*`, `backend.*`, `db.*`, `network.allowedNetworks`, `homeLinks.links`, `sso.*`). It can also attach existing Traefik `Middleware` CRDs to the exposed route via `traefik.middlewares` — see [Attaching Traefik middleware](./helm/live-home-page/README.md#attaching-traefik-middleware) in the chart README.
 
 ## Project structure
 
