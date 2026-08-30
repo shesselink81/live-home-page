@@ -58,6 +58,14 @@ spec:
             - name: DOCKER_API_URL
               value: {{ (.Values.mcp.dockerApiUrl | default (printf "tcp://%s:2375" .Values.mcp.host)) | quote }}
             {{- end }}
+            {{- if or .Values.cloudflare.apiToken .Values.unifi.existingSecret }}
+            - name: CLOUDFLARE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "live-home-page.secretName" . }}
+                  key: cloudflare-api-token
+                  optional: true
+            {{- end }}
             - name: DB_HOST
               value: {{ include "live-home-page.dbHost" . | quote }}
             - name: DB_PORT

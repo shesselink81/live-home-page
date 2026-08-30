@@ -2,11 +2,56 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts'
 import type { K8sNode, K8sPod, FluxSource, FluxHelmRelease } from '@/app/api/cloud/kubernetes/route'
 import type { HaIntegrations, HaApps, HaSystem, HaBackups, HaHacs } from '@/app/api/cloud/homeassistant/route'
 import type { DockerInfo, DockerContainer } from '@/app/api/cloud/docker/route'
+import type {
+  CloudflareTotals,
+  CloudflareZoneStats,
+  CloudflareHourPoint,
+  CloudflareCountBreakdown,
+  CloudflareStatusBuckets,
+} from '@/app/api/cloud/cloudflare/route'
 import { formatBytes } from '@/lib/format'
+
+const regionNames =
+  typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['en'], { type: 'region' }) : null
+
+function countryName(code: string): string {
+  if (!code) return 'Unknown'
+  try {
+    return regionNames?.of(code) ?? code
+  } catch {
+    return code
+  }
+}
+
+const DEVICE_COLORS: Record<string, string> = {
+  desktop: '#60a5fa',
+  mobile: '#f97316',
+  tablet: '#f472b6',
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  '2xx': '#34d399',
+  '3xx': '#60a5fa',
+  '4xx': '#facc15',
+  '5xx': '#ef4444',
+  other: '#9ca3af',
+}
 
 const REFRESH = 30_000
 
@@ -23,12 +68,13 @@ const fetcher = (url: string) =>
 
 const CHART_COLORS = ['#f97316', '#60a5fa', '#34d399', '#a78bfa', '#f472b6', '#facc15']
 
-const SUB_TABS = ['kubernetes', 'homeassistant', 'docker'] as const
+const SUB_TABS = ['kubernetes', 'homeassistant', 'docker', 'cloudflare'] as const
 type SubTab = (typeof SUB_TABS)[number]
 const SUB_TAB_LABEL: Record<SubTab, string> = {
   kubernetes: 'Kubernetes',
   homeassistant: 'Home Assistant',
   docker: 'Docker',
+  cloudflare: 'Cloudflare',
 }
 
 interface KubernetesData {
@@ -65,12 +111,27 @@ interface DockerData {
   hostMetricsHistory?: MetricPoint[]
 }
 
+interface CloudflareData {
+  ok: boolean
+  error?: string
+  totals?: CloudflareTotals
+  zones?: CloudflareZoneStats[]
+  timeseries?: CloudflareHourPoint[]
+  cacheStatus?: CloudflareCountBreakdown[]
+  byCountry?: CloudflareCountBreakdown[]
+  byDevice?: CloudflareCountBreakdown[]
+  byHost?: CloudflareCountBreakdown[]
+  byPath?: CloudflareCountBreakdown[]
+  statusCodes?: CloudflareStatusBuckets
+}
+
 export default function CloudAppsTab() {
   const [subTab, setSubTab] = useState<SubTab>('kubernetes')
 
   const { data: k8s } = useSWR<KubernetesData>('/api/cloud/kubernetes', fetcher, { refreshInterval: REFRESH })
   const { data: ha } = useSWR<HomeAssistantData>('/api/cloud/homeassistant', fetcher, { refreshInterval: REFRESH })
   const { data: docker } = useSWR<DockerData>('/api/cloud/docker', fetcher, { refreshInterval: REFRESH })
+  const { data: cloudflare } = useSWR<CloudflareData>('/api/cloud/cloudflare', fetcher, { refreshInterval: REFRESH })
 
   return (
     <div>
@@ -532,6 +593,88 @@ export default function CloudAppsTab() {
         )}
       </Section>
       )}
+
+      {subTab === 'cloudflare' && (
+      <Section title="Cloudflare — Traffic overview (last 24h)">
+        {!cloudflare ? (
+          <Loading />
+        ) : !cloudflare.ok ? (
+          <NotReachable detail={cloudflare.error} />
+        ) : (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Stat label="Total requests" value={cloudflare.totals?.requests?.toLocaleString()} />
+              <Stat label="Total visits" value={cloudflare.totals?.visits?.toLocaleString()} />
+              <Stat
+                label="Cache hit rate"
+                value={
+                  cloudflare.totals && cloudflare.totals.requests > 0
+                    ? `${((cloudflare.totals.cachedRequests / cloudflare.totals.requests) * 100).toFixed(2)}%`
+                    : undefined
+                }
+              />
+              <Stat label="Total data transfer" value={cloudflare.totals ? formatBytes(cloudflare.totals.bytes) : undefined} />
+            </div>
+
+            {!!cloudflare.timeseries?.length && (
+              <SubSection title="Requests over time">
+                <RequestsChart points={cloudflare.timeseries} />
+              </SubSection>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <SubSection title="Requests by device type">
+                <DeviceDonut data={cloudflare.byDevice ?? []} />
+              </SubSection>
+              <SubSection title="Status codes">
+                <StatusCodesBar buckets={cloudflare.statusCodes} />
+              </SubSection>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <SubSection title="Requests by country">
+                <CountBarList items={cloudflare.byCountry ?? []} labelFor={countryName} />
+              </SubSection>
+              <SubSection title="Top hosts">
+                <CountBarList items={cloudflare.byHost ?? []} />
+              </SubSection>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <SubSection title="Top paths">
+                <CountBarList items={cloudflare.byPath ?? []} mono />
+              </SubSection>
+              <SubSection title="Cache status">
+                <CountBarList items={cloudflare.cacheStatus ?? []} capitalize />
+              </SubSection>
+            </div>
+
+            <SubSection title="Zones">
+              {!cloudflare.zones?.length ? (
+                <p className="text-gray-500 text-sm">No zones visible to this API token</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-500 text-xs border-b border-gray-800">
+                      <th className="text-left pb-2 font-normal">Zone</th>
+                      <th className="text-left pb-2 font-normal">Requests</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800/50">
+                    {cloudflare.zones.map((z) => (
+                      <tr key={z.zoneTag}>
+                        <td className="py-2 pr-3 text-white font-medium">{z.name}</td>
+                        <td className="py-2 pr-3 text-gray-300 font-mono text-xs">{z.requests.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </SubSection>
+          </div>
+        )}
+      </Section>
+      )}
     </div>
   )
 }
@@ -585,6 +728,129 @@ function MetricsChart({ points, series, unit = '%' }: { points: MetricPoint[]; s
         ))}
       </LineChart>
     </ResponsiveContainer>
+  )
+}
+
+function RequestsChart({ points }: { points: CloudflareHourPoint[] }) {
+  if (points.length < 3) {
+    return <p className="text-gray-600 text-xs text-center py-6">Collecting data — chart appears after a few polls.</p>
+  }
+  const data = points.map((p) => ({
+    time: new Date(p.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    requests: p.requests,
+  }))
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+        <XAxis dataKey="time" stroke="#374151" tick={{ fill: '#6b7280', fontSize: 10 }} interval="preserveStartEnd" />
+        <YAxis
+          stroke="#374151"
+          tick={{ fill: '#6b7280', fontSize: 10 }}
+          width={44}
+          tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v))}
+        />
+        <Tooltip
+          contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
+          labelStyle={{ color: '#9ca3af', fontSize: 11 }}
+          itemStyle={{ fontSize: 12 }}
+          formatter={(v) => [Number(v).toLocaleString(), 'Requests'] as [string, string]}
+        />
+        <Line type="monotone" dataKey="requests" stroke="#f97316" dot={false} strokeWidth={1.5} />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+
+function CountBarList({
+  items,
+  labelFor,
+  mono,
+  capitalize,
+}: {
+  items: CloudflareCountBreakdown[]
+  labelFor?: (key: string) => string
+  mono?: boolean
+  capitalize?: boolean
+}) {
+  if (!items.length) return <p className="text-gray-500 text-sm">No data</p>
+  const max = Math.max(...items.map((i) => i.count), 1)
+  return (
+    <div className="space-y-1.5">
+      {items.map((item) => {
+        const label = labelFor ? labelFor(item.key) : item.key
+        return (
+          <div key={item.key} className="flex items-center gap-2 text-sm">
+            <span
+              className={`w-40 shrink-0 truncate text-gray-300 ${mono ? 'font-mono text-xs' : ''} ${capitalize ? 'capitalize' : ''}`}
+              title={label}
+            >
+              {label}
+            </span>
+            <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500/70 rounded-full" style={{ width: `${(item.count / max) * 100}%` }} />
+            </div>
+            <span className="w-16 shrink-0 text-right text-gray-400 font-mono text-xs">{item.count.toLocaleString()}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function DeviceDonut({ data }: { data: CloudflareCountBreakdown[] }) {
+  if (!data.length) return <p className="text-gray-500 text-sm">No data</p>
+  const total = data.reduce((s, d) => s + d.count, 0)
+  return (
+    <div className="flex items-center gap-4">
+      <ResponsiveContainer width={140} height={140}>
+        <PieChart>
+          <Pie data={data} dataKey="count" nameKey="key" innerRadius={40} outerRadius={65} paddingAngle={2}>
+            {data.map((d) => (
+              <Cell key={d.key} fill={DEVICE_COLORS[d.key] ?? '#9ca3af'} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
+            formatter={(v, n) => {
+              const num = Number(v)
+              return [`${num.toLocaleString()} (${((num / total) * 100).toFixed(1)}%)`, String(n)]
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="space-y-1 text-sm">
+        {data.map((d) => (
+          <div key={d.key} className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: DEVICE_COLORS[d.key] ?? '#9ca3af' }} />
+            <span className="text-gray-300 capitalize">{d.key}</span>
+            <span className="text-gray-500 font-mono text-xs">{d.count.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StatusCodesBar({ buckets }: { buckets?: CloudflareStatusBuckets }) {
+  if (!buckets) return <p className="text-gray-500 text-sm">No data</p>
+  const entries = (['2xx', '3xx', '4xx', '5xx', 'other'] as const)
+    .map((key) => ({ key, count: buckets[key] }))
+    .filter((e) => e.count > 0)
+  if (!entries.length) return <p className="text-gray-500 text-sm">No data</p>
+  const max = Math.max(...entries.map((e) => e.count), 1)
+  return (
+    <div className="space-y-1.5">
+      {entries.map((e) => (
+        <div key={e.key} className="flex items-center gap-2 text-sm">
+          <span className="w-10 shrink-0 text-gray-300 font-mono text-xs">{e.key}</span>
+          <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${(e.count / max) * 100}%`, background: STATUS_COLORS[e.key] }} />
+          </div>
+          <span className="w-16 shrink-0 text-right text-gray-400 font-mono text-xs">{e.count.toLocaleString()}</span>
+        </div>
+      ))}
+    </div>
   )
 }
 

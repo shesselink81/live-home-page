@@ -62,7 +62,9 @@
       "Bash(npm -v)",
       "Bash(npm install *)",
       "Bash(timeout 40 bash -c 'until grep -qE \"Ready in|✓ Ready|Error\" \"$1\"; do sleep 0.5; done' _ \"C:\\\\Users\\\\shess\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--Users-Sander-repos-unifi-ai\\\\b6f1f7b4-8af9-432f-9a84-e0c0644946d6\\\\tasks\\\\b45ssgs0e.output\")",
-      "mcp__unifi_Local__search_devices"
+      "mcp__unifi_Local__search_devices",
+      "mcp__cloudflare-api__get_accounts_by_account_id",
+      "mcp__cloudflare-api__get_zones"
     ]
   },
   "enableAllProjectMcpServers": true,

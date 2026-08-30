@@ -60,11 +60,12 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `unifi.cloudUrl` | `https://api.ui.com` | UniFi cloud API base URL |
 | `unifi.localApiKey` | `""` | Local API key (stored in a Secret) |
 | `unifi.cloudApiKey` | `""` | Cloud API key (stored in a Secret) |
-| `unifi.existingSecret` | `""` | Name of a pre-existing Secret to use instead of the one this chart creates (keys: `local-api-key`, `cloud-api-key`, `dashboard-token`, `mcp-github-token`, `db-password`, `sso-client-secret`, `sso-auth-secret` — populate whichever your config needs) |
+| `unifi.existingSecret` | `""` | Name of a pre-existing Secret to use instead of the one this chart creates (keys: `local-api-key`, `cloud-api-key`, `dashboard-token`, `mcp-github-token`, `cloudflare-api-token`, `db-password`, `sso-client-secret`, `sso-auth-secret` — populate whichever your config needs) |
 | `unifi.dashboardToken` | `""` | Optional bearer token to protect `/api/*` routes |
 | `mcp.host` | `""` | Shortcut host for building `mcp.kubernetesUrl`/`mcp.githubUrl`/`mcp.homeassistantUrl`/`mcp.dockerApiUrl` when a specific one is left empty |
 | `mcp.kubernetesUrl` / `mcp.homeassistantUrl` / `mcp.dockerApiUrl` | `""` | Read by the **backend** pod (Platforms Monitor tab sources) |
 | `mcp.githubUrl` / `mcp.githubToken` | `""` | Read by the **monitor** pod (GitHub tab stays there) |
+| `cloudflare.apiToken` | `""` | Cloudflare API token (stored in a Secret) for the Cloudflare section of the Platforms Monitor tab. No host/URL needed — zones are auto-discovered. Read by the **backend** pod |
 | `backend.image.repository` | `ghcr.io/shesselink81/live-home-page-backend` | Backend container image |
 | `backend.image.tag` | `""` | Backend image tag; defaults to `Chart.appVersion` |
 | `backend.service.port` | `4100` | Backend ClusterIP Service port (internal-only, no Ingress/HTTPRoute) |
@@ -163,7 +164,8 @@ Create the Secret yourself, then reference it. Include `db-password` too if
 kubectl create secret generic live-home-page-keys \
   --from-literal=local-api-key=YOUR_LOCAL_KEY \
   --from-literal=cloud-api-key=YOUR_CLOUD_KEY \
-  --from-literal=db-password=YOUR_DB_PASSWORD
+  --from-literal=db-password=YOUR_DB_PASSWORD \
+  --from-literal=cloudflare-api-token=YOUR_CLOUDFLARE_API_TOKEN
 
 helm install live-home-page . \
   --set unifi.localIp=192.168.1.1 \

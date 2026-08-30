@@ -62,6 +62,17 @@ mcp:
   homeassistantUrl: ""
   dockerApiUrl: ""
 
+# Optional: Cloudflare section of the Platforms Monitor tab. Talks directly
+# to the Cloudflare REST + GraphQL Analytics APIs — no MCP server, no
+# host/URL needed (unlike mcp.* above): the backend pod auto-discovers every
+# zone the token can see. Create a token at
+# https://dash.cloudflare.com/profile/api-tokens with Zone -> Analytics ->
+# Read (and Zone -> Zone -> Read) for the zones you want reported. Read by
+# the backend pod (see backend.* below) and stored in the same Secret as the
+# UniFi API keys above.
+cloudflare:
+  apiToken: ""
+
 # Backend service (see backend/) — owns ISP/Kubernetes/Home Assistant/Docker
 # polling and history, storing it in MariaDB (see db.* below) instead of
 # losing it on every pod restart. Deployed as its own pod; the monitor pod
