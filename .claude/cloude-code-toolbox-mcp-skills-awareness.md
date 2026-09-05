@@ -1,6 +1,6 @@
 # Cloude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-08-30T07:19:36.932Z_
+_Generated: 2026-09-04T13:18:29.462Z_
 
 ## How to use this report
 
@@ -21,6 +21,7 @@ Workspace `mcp.json` _(folder: unifi-ai)_
 |-----------|------|--------|
 | unifi Local | stdio | unifi-mcp-server |
 | unifi Cloud | stdio | unifi-mcp-server |
+| cloudflare-api | http | https://mcp.cloudflare.com/mcp?codemode=false |
 
 ## MCP — user profile
 
