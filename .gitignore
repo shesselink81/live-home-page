@@ -11,3 +11,4 @@ backend/dist/
 vpn/
 config
 kubeconfig
+.claude/settings.local.json
