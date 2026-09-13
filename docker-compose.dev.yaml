@@ -11,10 +11,12 @@ services:
     # and ALLOWED_NETWORKS, neither of which has a fixed key list to enumerate below.
     env_file: .env
     environment:
+      # UNIFI_LOCAL_API_KEY / UNIFI_CLOUD_API_KEY come from env_file above —
+      # don't redeclare them here via ${VAR} interpolation, which resolves
+      # against the host shell's environment before falling back to .env and
+      # will silently shadow .env with a stale value if one is set on the host.
       UNIFI_LOCAL_URL: https://${UNIFI_LOCAL_IP}/proxy/network
-      UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
       UNIFI_CLOUD_URL: https://api.ui.com
-      UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
       MCP_GITHUB_URL: ${MCP_GITHUB_URL:-http://${MCP_HOST:-192.168.1.1}:8082/mcp}
       MCP_GITHUB_TOKEN: ${MCP_GITHUB_TOKEN}
       BACKEND_URL: http://backend:4100
@@ -37,10 +39,12 @@ services:
     image: ghcr.io/shesselink81/live-home-page-backend:v${VERSION}-dev
     env_file: .env
     environment:
+      # UNIFI_LOCAL_API_KEY / UNIFI_CLOUD_API_KEY come from env_file above —
+      # don't redeclare them here via ${VAR} interpolation, which resolves
+      # against the host shell's environment before falling back to .env and
+      # will silently shadow .env with a stale value if one is set on the host.
       UNIFI_LOCAL_URL: https://${UNIFI_LOCAL_IP}/proxy/network
-      UNIFI_LOCAL_API_KEY: ${UNIFI_LOCAL_API_KEY}
       UNIFI_CLOUD_URL: https://api.ui.com
-      UNIFI_CLOUD_API_KEY: ${UNIFI_CLOUD_API_KEY}
       MCP_KUBERNETES_URL: ${MCP_KUBERNETES_URL:-http://${MCP_HOST:-192.168.1.1}:8087/mcp}
       MCP_HOMEASSISTANT_URL: ${MCP_HOMEASSISTANT_URL:-http://${MCP_HOST:-192.168.1.1}:8086/mcp}
       DOCKER_API_URL: ${DOCKER_API_URL:-tcp://${MCP_HOST:-192.168.1.1}:2375}
@@ -61,7 +65,7 @@ services:
         condition: service_healthy
 
   db:
-    image: mariadb:11
+    image: mariadb:12
     environment:
       MARIADB_DATABASE: ${DB_NAME:-unifi_metrics}
       MARIADB_USER: ${DB_USER:-unifi}

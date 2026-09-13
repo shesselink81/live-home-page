@@ -103,7 +103,7 @@ db:
   name: unifi_metrics
   image:
     repository: mariadb
-    tag: "11"
+    tag: "12"
   storage:
     size: 2Gi
     storageClassName: ""
