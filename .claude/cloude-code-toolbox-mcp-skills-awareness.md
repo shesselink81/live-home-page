@@ -1,6 +1,6 @@
 # Cloude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-10-02T15:31:19.709Z_
+_Generated: 2026-10-04T03:57:34.070Z_
 
 ## How to use this report
 
@@ -19,8 +19,7 @@ Workspace `mcp.json` _(folder: unifi-ai)_
 
 | Server id | Kind | Detail |
 |-----------|------|--------|
-| unifi Local | stdio | unifi-mcp-server |
-| unifi Cloud | stdio | unifi-mcp-server |
+| docker-compose-mcp | stdio | docker compose -f docker-compose.mcp.yaml up -d |
 | cloudflare-api | http | https://mcp.cloudflare.com/mcp?codemode=false |
 
 ## MCP — user profile
