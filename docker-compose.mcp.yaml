@@ -10,7 +10,9 @@
 # No MCP server credentials are committed to this repo: Home Assistant's
 # token and the kubeconfig both come from the host's own .env/filesystem.
 # The GitHub server holds no secret at all — the live-home-page app authenticates
-# to it per-request with its own MCP_GITHUB_TOKEN.
+# to it per-request with its own MCP_GITHUB_TOKEN. The UniFi Network server
+# reads UNIFI_NETWORK_HOST/USERNAME/PASSWORD (and optional
+# UNIFI_MCP_ALLOWED_HOSTS) from .env and serves Streamable HTTP at :8088/mcp.
 
 services:
   docker-socket-proxy:
@@ -65,19 +67,47 @@ services:
       - --disable-destructive
       - --stateless
 
-  github-mcp-server:
-    image: ghcr.io/github/github-mcp-server:latest
-    container_name: github-mcp-server
-    restart: unless-stopped
-    ports:
-      - "8082:8082"
+  # github-mcp-server:
+  #   image: ghcr.io/github/github-mcp-server:latest
+  #   container_name: github-mcp-server
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8082:8082"
+  #   environment:
+  #     - GITHUB_TOKEN=${MCP_GITHUB_TOKEN}
+  #   command:
+  #     - http
+  #     - --port=8082
+  #     - --read-only
+  #     - --toolsets=repos,context
+
+  unifi-mcp:
+    image: ghcr.io/enuno/unifi-mcp-server:latest
     environment:
-      - GITHUB_TOKEN=${MCP_GITHUB_TOKEN}
-    command:
-      - http
-      - --port=8082
-      - --read-only
-      - --toolsets=repos,context
+      UNIFI_API_KEY: ${UNIFI_LOCAL_API_KEY}
+      UNIFI_API_TYPE: local
+      UNIFI_LOCAL_HOST: ${UNIFI_LOCAL_IP}
+      UNIFI_LOCAL_VERIFY_SSL: false
+      MCP_SERVER_TRANSPORT: http
+      MCP_SERVER_PORT: 3000
+      MCP_SERVER_HOST: 0.0.0.0            # container-internal; keep the published port on loopback
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN}   # required — clients send Authorization: Bearer <token>
+    ports:
+      # Published on loopback; put an authenticating TLS proxy in front to expose it further.
+      - "127.0.0.1:3000:3000"
+
+  unifi-mcp-cloud:
+    image: ghcr.io/enuno/unifi-mcp-server:latest
+    environment:
+      UNIFI_API_KEY: ${UNIFI_CLOUD_API_KEY}
+      UNIFI_API_TYPE: cloud-v1
+      MCP_SERVER_TRANSPORT: http
+      MCP_SERVER_PORT: 3001
+      MCP_SERVER_HOST: 0.0.0.0            # container-internal; keep the published port on loopback
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN}   # required — clients send Authorization: Bearer <token>
+    ports:
+      # Published on loopback; put an authenticating TLS proxy in front to expose it further.
+      - "127.0.0.1:3001:3001"
 
 volumes:
   ha-mcp-data:
