@@ -52,20 +52,21 @@ services:
       - HOMEASSISTANT_TOKEN=${HOMEASSISTANT_TOKEN}
     restart: unless-stopped
 
-  kubernetes-mcp-server:
-    image: ghcr.io/containers/kubernetes-mcp-server:latest
-    container_name: kubernetes-mcp-server
-    restart: unless-stopped
-    ports:
-      - "8087:8080"
-    volumes:
-      - ${KUBECONFIG_PATH:-./kubeconfig}:/kubeconfig/config:ro
-    command:
-      - --port=8080
-      - --kubeconfig=/kubeconfig/config
-      - --read-only
-      - --disable-destructive
-      - --stateless
+  # kubernetes-mcp-server:
+  #   image: ghcr.io/containers/kubernetes-mcp-server:latest
+  #   container_name: kubernetes-mcp-server
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8087:8080"
+  #   volumes:
+  #     - ${KUBECONFIG_PATH:-./kubeconfig}:/kubeconfig/config:ro
+  #   command:
+  #     - http
+  #     # - --port=8080
+  #     - --kubeconfig=/kubeconfig/config
+  #     - --read-only
+  #     - --disable-destructive
+  #     - --stateless
 
   # github-mcp-server:
   #   image: ghcr.io/github/github-mcp-server:latest
