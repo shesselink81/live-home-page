@@ -9,6 +9,5 @@ backend/dist/
 .vscode
 .mcp.json
 vpn/
-config
 kubeconfig
 .claude/settings.local.json

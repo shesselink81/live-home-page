@@ -107,11 +107,12 @@ Use `/mcp` in Claude Code to access these tools once the MCP containers are runn
 
 
 
+
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (Cloude Code ToolBox)
 
-_Last synced: 2026-10-04T03:57:34.082Z._
+_Last synced: 2026-10-09T14:44:06.499Z._
 
 - **Full report:** `.claude/cloude-code-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
 - **MCP:** For **live tools** in Claude Code, enable the matching server via `/mcp`. Servers are configured in `~/.claude.json` (user) and `.mcp.json` (project).
@@ -124,8 +125,11 @@ _Last synced: 2026-10-04T03:57:34.082Z._
 
 | Server id | Kind | Detail |
 |-----------|------|--------|
-| docker-compose-mcp | stdio | docker compose -f docker-compose.mcp.yaml up -d |
 | cloudflare-api | http | https://mcp.cloudflare.com/mcp?codemode=false |
+| unifi-local | http | http://localhost:3000/mcp |
+| unifi-cloud | http | http://localhost:3001/mcp |
+| home-assistant | http | http://localhost:8086/mcp |
+| kubernetes | http | http://localhost:8087/mcp |
 
 #### User MCP
 

@@ -52,20 +52,21 @@ services:
       - HOMEASSISTANT_TOKEN=${HOMEASSISTANT_TOKEN}
     restart: unless-stopped
 
-  kubernetes-mcp-server:
-    image: ghcr.io/containers/kubernetes-mcp-server:latest
-    container_name: kubernetes-mcp-server
-    restart: unless-stopped
-    ports:
-      - "8087:8080"
-    volumes:
-      - ${KUBECONFIG_PATH:-./kubeconfig}:/kubeconfig/config:ro
-    command:
-      - --port=8080
-      - --kubeconfig=/kubeconfig/config
-      - --read-only
-      - --disable-destructive
-      - --stateless
+  # kubernetes-mcp-server:
+  #   image: ghcr.io/containers/kubernetes-mcp-server:latest
+  #   container_name: kubernetes-mcp-server
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8087:8080"
+  #   volumes:
+  #     - ${KUBECONFIG_PATH:-./kubeconfig}:/kubeconfig/config:ro
+  #   command:
+  #     - http
+  #     # - --port=8080
+  #     - --kubeconfig=/kubeconfig/config
+  #     - --read-only
+  #     - --disable-destructive
+  #     - --stateless
 
   # github-mcp-server:
   #   image: ghcr.io/github/github-mcp-server:latest
@@ -84,7 +85,7 @@ services:
   unifi-mcp:
     image: ghcr.io/enuno/unifi-mcp-server:latest
     environment:
-      UNIFI_API_KEY: ${UNIFI_LOCAL_API_KEY}
+      UNIFI_API_KEY: iW2Ga4najSZ1AywU3kYpyNaCzrWN9FFw
       UNIFI_API_TYPE: local
       UNIFI_LOCAL_HOST: ${UNIFI_LOCAL_IP}
       UNIFI_LOCAL_VERIFY_SSL: false
