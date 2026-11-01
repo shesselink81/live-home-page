@@ -1,6 +1,6 @@
-# Cloude Code ToolBox — MCP & Skills awareness
+# Claude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-10-09T14:44:06.168Z_
+_Generated: 2026-11-01T06:08:33.821Z_
 
 ## How to use this report
 
@@ -23,7 +23,6 @@ Workspace `mcp.json` _(folder: unifi-ai)_
 | unifi-local | http | http://localhost:3000/mcp |
 | unifi-cloud | http | http://localhost:3001/mcp |
 | home-assistant | http | http://localhost:8086/mcp |
-| kubernetes | http | http://localhost:8087/mcp |
 
 ## MCP — user profile
 
@@ -34,6 +33,7 @@ Workspace `mcp.json` _(folder: unifi-ai)_
 | context7 | http | https://mcp.context7.com/mcp |
 | github | http | https://api.githubcopilot.com/mcp |
 | MCP_DOCKER | stdio | docker mcp gateway run --profile ai_coding |
+| kubernetes-mcp-server | stdio | cmd /c npx -y kubernetes-mcp-server@latest --config D:/Users/Sander/repos/unifi-ai/config/kubernetes-mcp-server.toml |
 
 ## Skills (local `SKILL.md` folders)
 
@@ -53,4 +53,4 @@ _None found._
 - **Edit config:** Open `~/.claude.json` (user MCP) or `<workspace>/.mcp.json` (project MCP) via the extension commands.
 - **Refresh this report:** run **Intelligence — scan MCP & Skills awareness** again after changing MCP config or adding skills.
 
-_Report from Cloude Code ToolBox extension._
+_Report from Claude Code ToolBox extension._
