@@ -87,6 +87,53 @@ backend:
     port: 4100
   resources: {}
 
+# Optional: Prometheus exporter for UniFi metrics (WAN/ISP, devices, clients),
+# served by the backend pod on :4100/metrics. Everything is off by default.
+# The backend polls the controller on its own timer (pollInterval) and
+# scrapes only read that cached snapshot, so the Prometheus scrape interval
+# never changes how often UniFi gets hit. See README "Prometheus & Grafana".
+metrics:
+  enabled: false
+  # Seconds between UniFi device/client polls for the exporter (min 5).
+  # WAN/ISP metrics reuse the existing 10s ISP poll.
+  pollInterval: 30
+  # Per-client series (signal, traffic, uptime, info). One series set per
+  # connected client — fine for a home network; turn off for large sites.
+  perClient: true
+  # Adds prometheus.io/scrape|port|path annotations to the backend pod, for
+  # Prometheus setups that discover targets via annotations (no Operator).
+  podAnnotations: false
+
+  # Prometheus Operator ServiceMonitor (requires the monitoring.coreos.com
+  # CRDs, e.g. from kube-prometheus-stack — install fails clearly if missing).
+  serviceMonitor:
+    enabled: false
+    # Defaults to the release namespace. The ServiceMonitor always targets the
+    # backend Service in the release namespace.
+    namespace: ""
+    interval: 30s
+    scrapeTimeout: 10s
+    # Extra labels — e.g. `release: prometheus` if your Prometheus'
+    # serviceMonitorSelector requires it (kube-prometheus-stack default when
+    # serviceMonitorSelectorNilUsesHelmValues is true).
+    labels: {}
+    jobLabel: ""
+    relabelings: []
+    metricRelabelings: []
+
+  # Grafana dashboard ConfigMap for the Grafana sidecar (kube-prometheus-stack
+  # / grafana chart with sidecar.dashboards.enabled). The JSON lives in
+  # dashboards/unifi-overview.json and can also be imported manually.
+  grafanaDashboard:
+    enabled: false
+    # Defaults to the release namespace. Set to Grafana's namespace if the
+    # sidecar only watches its own namespace (sidecar.dashboards.searchNamespace).
+    namespace: ""
+    labels:
+      grafana_dashboard: "1"
+    # e.g. grafana_folder: UniFi (with sidecar.dashboards.folderAnnotation set)
+    annotations: {}
+
 # MariaDB storing the backend's metric/chart history. Bundled as a
 # single-replica Deployment + PVC by default (mirrors docker-compose.yaml's
 # `db` service — no clustering, so a full StatefulSet isn't needed for one

@@ -135,7 +135,19 @@ AUTH_ALLOWED_EMAILS=you@example.com
 
 Leave any of the three `AUTH_MICROSOFT_ENTRA_ID_*` values unset to keep SSO fully disabled — the app then behaves exactly as if this section didn't exist. `AUTH_ALLOWED_EMAILS` is optional too; leave it empty to allow any account in the tenant.
 
-### 6. Run
+### 6. Optional: Prometheus metrics
+
+Set `METRICS_ENABLED=true` in `.env` to make the backend serve UniFi
+WAN/ISP, device and client metrics in Prometheus format on
+`http://backend:4100/metrics`. The backend has no published port, so to
+scrape it from a Prometheus outside the compose network, add a `ports:`
+mapping for 4100 to the `backend` service. A ready-made Grafana dashboard is
+at `helm/live-home-page/dashboards/unifi-overview.json`: import it in Grafana
+and pick your Prometheus data source. See
+[Prometheus & Grafana](helm/live-home-page/README.md#prometheus--grafana) for
+the list of metrics.
+
+### 7. Run
 
 ```sh
 ## Start MCP Servers local
@@ -192,6 +204,8 @@ helm install live-home-page ./helm/live-home-page \
 ```
 
 Set `db.enabled=false` and `db.host=...` to point at an external MariaDB/MySQL server instead of the bundled one — see `helm/live-home-page/README.md` for details.
+
+For Prometheus/Grafana, add `--set metrics.enabled=true --set metrics.serviceMonitor.enabled=true --set metrics.grafanaDashboard.enabled=true`. This creates a `ServiceMonitor` for the backend's `/metrics` and a "UniFi Overview" dashboard ConfigMap for the Grafana sidecar. See [Prometheus & Grafana](helm/live-home-page/README.md#prometheus--grafana).
 
 Then port-forward or enable an Ingress:
 
