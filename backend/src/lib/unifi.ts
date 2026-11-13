@@ -200,6 +200,26 @@ export async function getGateway(): Promise<Device | null> {
   return devices.find((d) => GATEWAY_TYPES.has(d.type)) ?? null
 }
 
+interface CloudIssue {
+  index?: number
+  highLatency?: boolean
+  packetLoss?: boolean
+  wanDowntime?: boolean
+  latencyAvgMs?: number
+  latencyMaxMs?: number
+}
+
+const ISSUE_BUCKET_MS = 5 * 60_000
+// Current bucket + the two before it — tolerates the cloud API lagging a
+// bucket or two behind real time.
+const ISSUE_WINDOW_MS = 15 * 60_000
+
+export function isRecentIssue(i: CloudIssue, now = Date.now()): boolean {
+  // No bucket index → can't age it; keep the old "treat as active" behaviour.
+  if (typeof i.index !== 'number') return true
+  return (i.index + 1) * ISSUE_BUCKET_MS >= now - ISSUE_WINDOW_MS
+}
+
 interface LocalHealthEntry {
   subsystem: string
   status?: string
@@ -220,23 +240,27 @@ export async function getWanHealth(): Promise<WanHealth | null> {
     statistics?: {
       ispInfo?: IspInfo
       percentages?: { wanUptime?: number; txRetry?: number }
-      internetIssues?: Array<{ highLatency?: boolean; packetLoss?: boolean; wanDowntime?: boolean; latencyAvgMs?: number; latencyMaxMs?: number }>
+      internetIssues?: CloudIssue[]
       wans?: { WAN?: { externalIp?: string } }
     }
   }
   const stats = site?.statistics
   if (!stats) return null
 
-  const issues = (stats.internetIssues ?? []).filter(
-    (i) => i.highLatency || i.packetLoss || i.wanDowntime
-  )
+  // internetIssues is a rolling ~24h HISTORY of 5-minute buckets, not the
+  // current state — `index` is the bucket number (epoch seconds / 300).
+  // Only buckets from the last ISSUE_WINDOW_MS count as "active now";
+  // without this, a packet-loss blip from 14h ago kept every issue flag (and
+  // the unifi_wan_issue metric/alerts) stuck at 1 all day.
+  const recent = (stats.internetIssues ?? []).filter(isRecentIssue)
+  const issues = recent.filter((i) => i.highLatency || i.packetLoss || i.wanDowntime)
 
   // Prefer real-time latency from local health (always present); fall back to cloud issue data.
   const wwwEntry = localHealth.status === 'fulfilled'
     ? (localHealth.value as LocalHealthEntry[]).find((e) => e.subsystem === 'www')
     : undefined
-  const latencyAvgMs = wwwEntry?.latency ?? stats.internetIssues?.find((i) => i.highLatency)?.latencyAvgMs ?? null
-  const latencyMaxMs = stats.internetIssues?.find((i) => i.highLatency)?.latencyMaxMs ?? null
+  const latencyAvgMs = wwwEntry?.latency ?? recent.find((i) => i.highLatency)?.latencyAvgMs ?? null
+  const latencyMaxMs = recent.find((i) => i.highLatency)?.latencyMaxMs ?? null
   const wanUp = wwwEntry?.status ? wwwEntry.status === 'ok' : !issues.some((i) => i.wanDowntime)
 
   return {
