@@ -214,6 +214,8 @@ const ISSUE_BUCKET_MS = 5 * 60_000
 // bucket or two behind real time.
 const ISSUE_WINDOW_MS = 15 * 60_000
 
+// Call as isRecentIssue(i) — NOT .filter(isRecentIssue): filter passes the array
+// index as the 2nd argument, which would become `now` and mark everything recent.
 export function isRecentIssue(i: CloudIssue, now = Date.now()): boolean {
   // No bucket index → can't age it; keep the old "treat as active" behaviour.
   if (typeof i.index !== 'number') return true
@@ -252,7 +254,7 @@ export async function getWanHealth(): Promise<WanHealth | null> {
   // Only buckets from the last ISSUE_WINDOW_MS count as "active now";
   // without this, a packet-loss blip from 14h ago kept every issue flag (and
   // the unifi_wan_issue metric/alerts) stuck at 1 all day.
-  const recent = (stats.internetIssues ?? []).filter(isRecentIssue)
+  const recent = (stats.internetIssues ?? []).filter((i) => isRecentIssue(i))
   const issues = recent.filter((i) => i.highLatency || i.packetLoss || i.wanDowntime)
 
   // Prefer real-time latency from local health (always present); fall back to cloud issue data.
