@@ -53,6 +53,12 @@ services:
       DB_USER: ${DB_USER:-unifi}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME:-unifi_metrics}
+      # Prometheus exporter on :4100/metrics (off by default). See README
+      # "Prometheus metrics". Publish port 4100 (or put Prometheus on this
+      # compose network) for an external Prometheus to scrape it.
+      METRICS_ENABLED: ${METRICS_ENABLED:-false}
+      METRICS_POLL_INTERVAL: ${METRICS_POLL_INTERVAL:-30}
+      METRICS_PER_CLIENT: ${METRICS_PER_CLIENT:-true}
     volumes:
       - ./backend/src:/app/src
     develop:
