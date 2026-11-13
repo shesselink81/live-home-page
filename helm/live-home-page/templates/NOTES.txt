@@ -20,3 +20,17 @@ UniFi AI monitor deployed!
     kubectl port-forward svc/{{ include "live-home-page.fullname" . }} 4000:4000
   Then open http://localhost:4000
 {{- end }}
+{{- if .Values.metrics.enabled }}
+
+  Prometheus metrics (backend, cluster-internal):
+    http://{{ include "live-home-page.backendFullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.backend.service.port }}/metrics
+  Quick check:
+    kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "live-home-page.backendFullname" . }} 4100:{{ .Values.backend.service.port }}
+    curl -s http://localhost:4100/metrics | grep ^unifi_
+{{- if .Values.metrics.serviceMonitor.enabled }}
+  ServiceMonitor: {{ .Values.metrics.serviceMonitor.namespace | default .Release.Namespace }}/{{ include "live-home-page.backendFullname" . }}
+{{- end }}
+{{- if .Values.metrics.grafanaDashboard.enabled }}
+  Grafana dashboard ConfigMap: "UniFi Overview" (uid unifi-overview-lhp)
+{{- end }}
+{{- end }}
