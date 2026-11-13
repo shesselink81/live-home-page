@@ -205,7 +205,7 @@ helm install live-home-page ./helm/live-home-page \
 
 Set `db.enabled=false` and `db.host=...` to point at an external MariaDB/MySQL server instead of the bundled one — see `helm/live-home-page/README.md` for details.
 
-For Prometheus/Grafana, add `--set metrics.enabled=true --set metrics.serviceMonitor.enabled=true --set metrics.grafanaDashboard.enabled=true`. This creates a `ServiceMonitor` for the backend's `/metrics` and a "UniFi Overview" dashboard ConfigMap for the Grafana sidecar. See [Prometheus & Grafana](helm/live-home-page/README.md#prometheus--grafana).
+For Prometheus/Grafana, add `--set metrics.enabled=true --set metrics.serviceMonitor.enabled=true --set metrics.grafanaDashboard.enabled=true`. Add `--set metrics.prometheusRule.enabled=true --set metrics.prometheusRule.labels.release=prometheus` for the bundled alert rules (WAN down/latency/packet loss, device down/CPU/memory/load/temperature, exporter health). This creates a `ServiceMonitor` for the backend's `/metrics` and a "UniFi Overview" dashboard ConfigMap for the Grafana sidecar. See [Prometheus & Grafana](helm/live-home-page/README.md#prometheus--grafana).
 
 Then port-forward or enable an Ingress:
 

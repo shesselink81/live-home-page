@@ -1,0 +1,220 @@
+{{- if and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled }}
+{{- if not (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1/PrometheusRule") }}
+{{- fail "metrics.prometheusRule.enabled is true but the PrometheusRule CRD (monitoring.coreos.com/v1) is not installed — install the Prometheus Operator / kube-prometheus-stack first, or set metrics.prometheusRule.enabled=false" }}
+{{- end }}
+{{- $pr := .Values.metrics.prometheusRule }}
+{{- $t := $pr.thresholds }}
+{{- $off := $pr.disabled | default list }}
+{{- /* Job label Prometheus assigns to the ServiceMonitor target = backend Service name (unless serviceMonitor.jobLabel overrides it) */}}
+{{- $job := include "live-home-page.backendFullname" . }}
+{{- $sel := printf "job=\"%s\",namespace=\"%s\"" $job .Release.Namespace }}
+{{- $gw := "type=~\"udm|ugw|uxg\"" }}
+{{- $dash := "/d/unifi-overview-lhp/unifi-overview" }}
+{{- $extraLabels := $pr.alertLabels | default dict }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "live-home-page.backendFullname" . }}-unifi
+  namespace: {{ $pr.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "live-home-page.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+    {{- with $pr.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: unifi-wan
+      rules:
+        {{- if not (has "UnifiWanDown" $off) }}
+        - alert: UnifiWanDown
+          expr: unifi_wan_up{ {{- $sel -}} } == 0
+          for: 2m
+          labels:
+            severity: critical
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              Internet connection ({{`{{ $labels.wan }}`}}) is down
+            description: >-
+              The UniFi controller reports {{`{{ $labels.wan }}`}} as down for more than 2 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiWanHighLatency" $off) }}
+        - alert: UnifiWanHighLatency
+          expr: avg_over_time(unifi_wan_latency_ms{ {{- $sel -}} }[5m]) > {{ $t.wanLatencyMs }}
+          for: 10m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              High WAN latency ({{`{{ $value | printf "%.0f" }}`}} ms)
+            description: >-
+              Average WAN latency over 5 minutes has been above {{ $t.wanLatencyMs }} ms for 10 minutes (currently {{`{{ $value | printf "%.0f" }}`}} ms).
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiWanPacketLoss" $off) }}
+        - alert: UnifiWanPacketLoss
+          expr: unifi_wan_issue{ {{- $sel -}},type="packet_loss"} == 1
+          for: 5m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              Packet loss on {{`{{ $labels.wan }}`}}
+            description: >-
+              The UniFi cloud API has reported an active packet-loss issue on {{`{{ $labels.wan }}`}} for 5 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiWanUptimeLow" $off) }}
+        - alert: UnifiWanUptimeLow
+          expr: unifi_wan_uptime_ratio_24h{ {{- $sel -}} } < {{ $t.wanUptimeRatio }}
+          for: 15m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              WAN uptime over 24h is {{`{{ $value | humanizePercentage }}`}}
+            description: >-
+              Rolling 24h WAN uptime is below {{ $t.wanUptimeRatio | mulf 100 }}% ({{`{{ $value | humanizePercentage }}`}}), meaning repeated or long outages today.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+
+    - name: unifi-devices
+      rules:
+        {{- if not (has "UnifiGatewayDown" $off) }}
+        - alert: UnifiGatewayDown
+          expr: unifi_device_up{ {{- $sel -}},{{ $gw }}} == 0
+          for: 2m
+          labels:
+            severity: critical
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              Gateway {{`{{ $labels.name }}`}} is disconnected
+            description: >-
+              The gateway {{`{{ $labels.name }}`}} ({{`{{ $labels.model }}`}}) has not been in the connected state for 2 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiDeviceDown" $off) }}
+        - alert: UnifiDeviceDown
+          expr: unifi_device_up{ {{- $sel -}},type!~"udm|ugw|uxg"} == 0
+          for: 5m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              UniFi device {{`{{ $labels.name }}`}} is disconnected
+            description: >-
+              {{`{{ $labels.name }}`}} ({{`{{ $labels.type }}`}} {{`{{ $labels.model }}`}}) has not been in the connected state for 5 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiDeviceHighCpu" $off) }}
+        - alert: UnifiDeviceHighCpu
+          expr: avg_over_time(unifi_device_cpu_ratio{ {{- $sel -}} }[5m]) > {{ $t.deviceCpuRatio }}
+          for: 15m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              High CPU on {{`{{ $labels.name }}`}} ({{`{{ $value | humanizePercentage }}`}})
+            description: >-
+              CPU on {{`{{ $labels.name }}`}} ({{`{{ $labels.model }}`}}) has averaged above {{ $t.deviceCpuRatio | mulf 100 }}% for 15 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiDeviceHighMemory" $off) }}
+        - alert: UnifiDeviceHighMemory
+          expr: unifi_device_mem_ratio{ {{- $sel -}} } > {{ $t.deviceMemRatio }}
+          for: 15m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              High memory on {{`{{ $labels.name }}`}} ({{`{{ $value | humanizePercentage }}`}})
+            description: >-
+              Memory use on {{`{{ $labels.name }}`}} ({{`{{ $labels.model }}`}}) has been above {{ $t.deviceMemRatio | mulf 100 }}% for 15 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiDeviceHighLoad" $off) }}
+        - alert: UnifiDeviceHighLoad
+          expr: avg_over_time(unifi_device_load1{ {{- $sel -}} }[5m]) > {{ $t.deviceLoad1 }}
+          for: 15m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              High load on {{`{{ $labels.name }}`}} ({{`{{ $value | printf "%.2f" }}`}})
+            description: >-
+              The 1-minute load average on {{`{{ $labels.name }}`}} ({{`{{ $labels.model }}`}}) has averaged above {{ $t.deviceLoad1 }} for 15 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiDeviceHighTemperature" $off) }}
+        - alert: UnifiDeviceHighTemperature
+          expr: unifi_device_temperature_celsius{ {{- $sel -}} } > {{ $t.deviceTemperatureC }}
+          for: 10m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              {{`{{ $labels.name }}`}} is running hot ({{`{{ $value | printf "%.0f" }}`}} °C)
+            description: >-
+              The hottest sensor on {{`{{ $labels.name }}`}} ({{`{{ $labels.model }}`}}) has been above {{ $t.deviceTemperatureC }} °C for 10 minutes.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+        {{- if not (has "UnifiDeviceRebooted" $off) }}
+        - alert: UnifiDeviceRebooted
+          expr: unifi_device_uptime_seconds{ {{- $sel -}} } < 600
+          labels:
+            severity: info
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              {{`{{ $labels.name }}`}} restarted
+            description: >-
+              {{`{{ $labels.name }}`}} ({{`{{ $labels.model }}`}}) has an uptime of {{`{{ $value | humanizeDuration }}`}} — it rebooted or was re-provisioned recently.
+            dashboard_url: {{ $dash }}
+        {{- end }}
+
+    - name: unifi-exporter
+      rules:
+        {{- if not (has "UnifiExporterDown" $off) }}
+        - alert: UnifiExporterDown
+          expr: up{ {{- $sel -}} } == 0 or absent(up{ {{- $sel -}} })
+          for: 5m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              UniFi exporter is not being scraped
+            description: >-
+              Prometheus can't scrape {{ $job }}/metrics in namespace {{ .Release.Namespace }} — all UniFi alerts are blind until this is fixed.
+        {{- end }}
+        {{- if not (has "UnifiPollFailing" $off) }}
+        - alert: UnifiPollFailing
+          expr: unifi_exporter_poll_success{ {{- $sel -}},source=~"isp|unifi_metrics"} == 0
+          for: 10m
+          labels:
+            severity: warning
+            {{- with $extraLabels }}{{ toYaml . | nindent 12 }}{{ end }}
+          annotations:
+            summary: >-
+              Backend can't poll UniFi ({{`{{ $labels.source }}`}})
+            description: >-
+              The backend's {{`{{ $labels.source }}`}} poll has been failing for 10 minutes — UniFi metrics are stale. Check the controller URL / API keys and the backend logs.
+        {{- end }}
+    {{- with $pr.extraRules }}
+
+    - name: unifi-extra
+      rules:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

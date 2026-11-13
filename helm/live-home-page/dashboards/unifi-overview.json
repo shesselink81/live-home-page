@@ -98,7 +98,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "WAN / Internet",
+      "title": "Alerts",
       "id": 1,
       "collapsed": false,
       "gridPos": {
@@ -111,8 +111,231 @@
     },
     {
       "type": "stat",
-      "title": "WAN status",
+      "title": "Active UniFi alerts",
       "id": 2,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Firing alerts from the chart's PrometheusRule (metrics.prometheusRule). Always 0 if the rules aren't deployed.",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(ALERTS{alertname=~\"Unifi.*\",alertstate=\"firing\"}) or vector(0)",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Firing / pending UniFi alerts",
+      "id": 3,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "From Prometheus' ALERTS series (alerts defined by metrics.prometheusRule).",
+      "gridPos": {
+        "h": 5,
+        "w": 20,
+        "x": 4,
+        "y": 1
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "ALERTS{alertname=~\"Unifi.*\"}",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^(alertname|alertstate|severity|name|wan|source|type)$"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "severity": 0,
+              "alertname": 1,
+              "alertstate": 2,
+              "name": 3,
+              "wan": 4,
+              "type": 5,
+              "source": 6
+            },
+            "renameByName": {
+              "severity": "Severity",
+              "alertname": "Alert",
+              "alertstate": "State",
+              "name": "Device",
+              "wan": "WAN",
+              "type": "Issue",
+              "source": "Poll source"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Severity"
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "No active UniFi alerts"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "critical": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "warning": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "info": {
+                        "color": "blue",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "firing": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "pending": {
+                        "color": "yellow",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "row",
+      "title": "WAN / Internet",
+      "id": 4,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "WAN status",
+      "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -122,7 +345,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 1
+        "y": 7
       },
       "targets": [
         {
@@ -189,7 +412,7 @@
     {
       "type": "stat",
       "title": "Latency",
-      "id": 3,
+      "id": 6,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -199,7 +422,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 1
+        "y": 7
       },
       "targets": [
         {
@@ -254,7 +477,7 @@
     {
       "type": "gauge",
       "title": "WAN uptime (24h)",
-      "id": 4,
+      "id": 7,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -264,7 +487,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 1
+        "y": 7
       },
       "targets": [
         {
@@ -320,7 +543,7 @@
     {
       "type": "stat",
       "title": "Continuous WAN uptime",
-      "id": 5,
+      "id": 8,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -330,7 +553,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 1
+        "y": 7
       },
       "targets": [
         {
@@ -379,7 +602,7 @@
     {
       "type": "stat",
       "title": "ISP",
-      "id": 6,
+      "id": 9,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -389,7 +612,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 1
+        "y": 7
       },
       "targets": [
         {
@@ -438,7 +661,7 @@
     {
       "type": "stat",
       "title": "External IP",
-      "id": 7,
+      "id": 10,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -448,7 +671,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 1
+        "y": 7
       },
       "targets": [
         {
@@ -497,7 +720,7 @@
     {
       "type": "timeseries",
       "title": "WAN latency",
-      "id": 8,
+      "id": 11,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -507,7 +730,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 11
       },
       "targets": [
         {
@@ -565,7 +788,7 @@
     {
       "type": "timeseries",
       "title": "Internet issues",
-      "id": 9,
+      "id": 12,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -575,7 +798,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 11
       },
       "targets": [
         {
@@ -634,20 +857,20 @@
     {
       "type": "row",
       "title": "Gateway",
-      "id": 10,
+      "id": 13,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 19
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Gateway CPU",
-      "id": 11,
+      "id": 14,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -657,7 +880,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 14
+        "y": 20
       },
       "targets": [
         {
@@ -713,7 +936,7 @@
     {
       "type": "stat",
       "title": "Gateway memory",
-      "id": 12,
+      "id": 15,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -723,7 +946,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 14
+        "y": 20
       },
       "targets": [
         {
@@ -779,7 +1002,7 @@
     {
       "type": "stat",
       "title": "Gateway temperature",
-      "id": 13,
+      "id": 16,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -789,7 +1012,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 14
+        "y": 20
       },
       "targets": [
         {
@@ -844,7 +1067,7 @@
     {
       "type": "stat",
       "title": "WAN download",
-      "id": 14,
+      "id": 17,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -854,7 +1077,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 14
+        "y": 20
       },
       "targets": [
         {
@@ -901,7 +1124,7 @@
     {
       "type": "stat",
       "title": "WAN upload",
-      "id": 15,
+      "id": 18,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -911,7 +1134,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 14
+        "y": 20
       },
       "targets": [
         {
@@ -958,7 +1181,7 @@
     {
       "type": "stat",
       "title": "Gateway uptime",
-      "id": 16,
+      "id": 19,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -968,7 +1191,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 14
+        "y": 20
       },
       "targets": [
         {
@@ -1017,7 +1240,7 @@
     {
       "type": "timeseries",
       "title": "WAN throughput",
-      "id": 17,
+      "id": 20,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1027,7 +1250,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 24
       },
       "targets": [
         {
@@ -1084,7 +1307,7 @@
     {
       "type": "timeseries",
       "title": "Gateway CPU / memory",
-      "id": 18,
+      "id": 21,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1094,7 +1317,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 24
       },
       "targets": [
         {
@@ -1153,20 +1376,20 @@
     {
       "type": "row",
       "title": "Devices",
-      "id": 19,
+      "id": 22,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 32
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Devices online",
-      "id": 20,
+      "id": 23,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1176,7 +1399,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 27
+        "y": 33
       },
       "targets": [
         {
@@ -1225,7 +1448,7 @@
     {
       "type": "stat",
       "title": "Devices offline",
-      "id": 21,
+      "id": 24,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1235,7 +1458,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 27
+        "y": 33
       },
       "targets": [
         {
@@ -1288,7 +1511,7 @@
     {
       "type": "stat",
       "title": "Firmware versions",
-      "id": 22,
+      "id": 25,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1298,7 +1521,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 31
+        "y": 37
       },
       "targets": [
         {
@@ -1347,7 +1570,7 @@
     {
       "type": "table",
       "title": "Device status",
-      "id": 23,
+      "id": 26,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1356,7 +1579,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 27
+        "y": 33
       },
       "targets": [
         {
@@ -1598,7 +1821,7 @@
     {
       "type": "timeseries",
       "title": "Throughput per device",
-      "id": 24,
+      "id": 27,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1608,7 +1831,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 41
       },
       "targets": [
         {
@@ -1665,7 +1888,7 @@
     {
       "type": "timeseries",
       "title": "Clients per device",
-      "id": 25,
+      "id": 28,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1675,7 +1898,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 41
       },
       "targets": [
         {
@@ -1724,7 +1947,7 @@
     {
       "type": "timeseries",
       "title": "CPU per device",
-      "id": 26,
+      "id": 29,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1734,7 +1957,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 49
       },
       "targets": [
         {
@@ -1783,7 +2006,7 @@
     {
       "type": "timeseries",
       "title": "Temperature per device",
-      "id": 27,
+      "id": 30,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1793,7 +2016,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 49
       },
       "targets": [
         {
@@ -1841,20 +2064,20 @@
     {
       "type": "row",
       "title": "Clients",
-      "id": 28,
+      "id": 31,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 57
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Clients total",
-      "id": 29,
+      "id": 32,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1864,7 +2087,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 52
+        "y": 58
       },
       "targets": [
         {
@@ -1911,7 +2134,7 @@
     {
       "type": "stat",
       "title": "Wireless",
-      "id": 30,
+      "id": 33,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1921,7 +2144,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 52
+        "y": 58
       },
       "targets": [
         {
@@ -1968,7 +2191,7 @@
     {
       "type": "stat",
       "title": "Wired",
-      "id": 31,
+      "id": 34,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1978,7 +2201,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 52
+        "y": 58
       },
       "targets": [
         {
@@ -2025,7 +2248,7 @@
     {
       "type": "stat",
       "title": "Weak-signal clients (< -75 dBm)",
-      "id": 32,
+      "id": 35,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2035,7 +2258,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 52
+        "y": 58
       },
       "targets": [
         {
@@ -2090,7 +2313,7 @@
     {
       "type": "stat",
       "title": "Networks",
-      "id": 33,
+      "id": 36,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2100,7 +2323,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 52
+        "y": 58
       },
       "targets": [
         {
@@ -2149,7 +2372,7 @@
     {
       "type": "timeseries",
       "title": "Clients by connection",
-      "id": 34,
+      "id": 37,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2159,7 +2382,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 56
+        "y": 62
       },
       "targets": [
         {
@@ -2208,7 +2431,7 @@
     {
       "type": "timeseries",
       "title": "Clients by network",
-      "id": 35,
+      "id": 38,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2218,7 +2441,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 56
+        "y": 62
       },
       "targets": [
         {
@@ -2267,7 +2490,7 @@
     {
       "type": "timeseries",
       "title": "Top 10 clients by download",
-      "id": 36,
+      "id": 39,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2277,7 +2500,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 64
+        "y": 70
       },
       "targets": [
         {
@@ -2326,7 +2549,7 @@
     {
       "type": "timeseries",
       "title": "Top 10 clients by upload",
-      "id": 37,
+      "id": 40,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2336,7 +2559,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 64
+        "y": 70
       },
       "targets": [
         {
@@ -2385,7 +2608,7 @@
     {
       "type": "bargauge",
       "title": "Weakest wireless clients",
-      "id": 38,
+      "id": 41,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2395,7 +2618,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 72
+        "y": 78
       },
       "targets": [
         {
@@ -2455,7 +2678,7 @@
     {
       "type": "table",
       "title": "Clients per access point / switch",
-      "id": 39,
+      "id": 42,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2465,7 +2688,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 72
+        "y": 78
       },
       "targets": [
         {
@@ -2513,20 +2736,20 @@
     {
       "type": "row",
       "title": "Exporter health",
-      "id": 40,
+      "id": 43,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 88
       },
       "panels": []
     },
     {
       "type": "timeseries",
       "title": "Poll success",
-      "id": 41,
+      "id": 44,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2536,7 +2759,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 83
+        "y": 89
       },
       "targets": [
         {
@@ -2586,7 +2809,7 @@
     {
       "type": "stat",
       "title": "Seconds since last successful UniFi poll",
-      "id": 42,
+      "id": 45,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2596,7 +2819,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 83
+        "y": 89
       },
       "targets": [
         {
@@ -2653,7 +2876,7 @@
     {
       "type": "timeseries",
       "title": "Poll duration",
-      "id": 43,
+      "id": 46,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2663,7 +2886,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 83
+        "y": 89
       },
       "targets": [
         {
