@@ -1,0 +1,23 @@
+{{- if and .Values.metrics.enabled .Values.metrics.grafanaDashboard.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-grafana-dashboard" (include "live-home-page.fullname" .) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Values.metrics.grafanaDashboard.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "live-home-page.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+    {{- with .Values.metrics.grafanaDashboard.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.metrics.grafanaDashboard.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  # Picked up by the Grafana dashboard sidecar (kube-prometheus-stack /
+  # grafana chart: sidecar.dashboards.enabled, label grafana_dashboard=1).
+  # The same JSON can be imported manually in Grafana outside Kubernetes.
+  unifi-overview.json: |-
+    {{- .Files.Get "dashboards/unifi-overview.json" | nindent 4 }}
+{{- end }}

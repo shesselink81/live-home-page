@@ -70,6 +70,19 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `backend.image.tag` | `""` | Backend image tag; defaults to `Chart.appVersion` |
 | `backend.service.port` | `4100` | Backend ClusterIP Service port (internal-only, no Ingress/HTTPRoute) |
 | `backend.resources` | `{}` | Backend pod resource requests/limits |
+| `metrics.enabled` | `false` | Enable the backend's Prometheus exporter (`:4100/metrics`). See [Prometheus & Grafana](#prometheus--grafana) |
+| `metrics.pollInterval` | `30` | Seconds between UniFi device/client polls for the exporter (min 5). Scrapes only read the cached snapshot |
+| `metrics.perClient` | `true` | Export per-client series (signal, traffic, uptime, info). Disable for large networks |
+| `metrics.podAnnotations` | `false` | Add `prometheus.io/scrape`/`port`/`path` annotations to the backend pod (annotation-based scraping, no Operator) |
+| `metrics.serviceMonitor.enabled` | `false` | Create a Prometheus Operator `ServiceMonitor` (fails clearly if the CRD isn't installed) |
+| `metrics.serviceMonitor.namespace` | `""` | ServiceMonitor namespace; defaults to the release namespace |
+| `metrics.serviceMonitor.interval` / `.scrapeTimeout` | `30s` / `10s` | Scrape interval / timeout |
+| `metrics.serviceMonitor.labels` | `{}` | Extra labels, e.g. `release: prometheus` if your Prometheus' `serviceMonitorSelector` needs it |
+| `metrics.serviceMonitor.jobLabel` / `.relabelings` / `.metricRelabelings` | `""` / `[]` / `[]` | Passed through to the ServiceMonitor |
+| `metrics.grafanaDashboard.enabled` | `false` | Create a ConfigMap with the "UniFi Overview" dashboard for the Grafana sidecar |
+| `metrics.grafanaDashboard.namespace` | `""` | ConfigMap namespace; defaults to the release namespace (set it to Grafana's namespace if the sidecar doesn't search all namespaces) |
+| `metrics.grafanaDashboard.labels` | `grafana_dashboard: "1"` | Labels the Grafana sidecar selects on |
+| `metrics.grafanaDashboard.annotations` | `{}` | e.g. `grafana_folder: UniFi` (with the sidecar's `folderAnnotation` set) |
 | `db.enabled` | `true` | Bundle a single-replica MariaDB Deployment + PVC. Set `false` to use an external server via `db.host` |
 | `db.host` | `""` | External MariaDB/MySQL host; only used when `db.enabled: false` |
 | `db.port` | `3306` | DB port |
@@ -209,6 +222,45 @@ something like `https://0.0.0.0:4000/api/auth/signin/microsoft-entra-id`
 instead of the public URL. Setting `host` makes the chart set
 `AUTH_URL=https://<host>`, which Auth.js reads directly and skips header-based
 detection entirely.
+
+## Prometheus & Grafana
+
+The backend pod can expose UniFi metrics in Prometheus format on
+`:4100/metrics`, and the chart can deploy a `ServiceMonitor` and a Grafana
+dashboard to go with it. All three are off by default. With
+kube-prometheus-stack:
+
+```sh
+helm upgrade live-home-page ./helm/live-home-page --reuse-values \
+  --set metrics.enabled=true \
+  --set metrics.serviceMonitor.enabled=true \
+  --set metrics.grafanaDashboard.enabled=true
+```
+
+If your Prometheus only selects ServiceMonitors with a specific label (the
+kube-prometheus-stack default while `serviceMonitorSelectorNilUsesHelmValues`
+is true), also set `metrics.serviceMonitor.labels.release=<your prometheus release>`.
+
+The backend polls the controller on its own timer (`metrics.pollInterval`),
+and scrapes only read that cached snapshot, so the Prometheus scrape interval
+doesn't change how often UniFi gets hit. The dashboard JSON is at
+`dashboards/unifi-overview.json` in this chart and can also be imported into
+any Grafana by hand. It has a data source picker and `job`/`device`/`network`
+filters.
+
+| Metric | Labels | Notes |
+|---|---|---|
+| `unifi_wan_up`, `unifi_wan_latency_ms`, `unifi_wan_latency_max_ms`, `unifi_wan_uptime_seconds`, `unifi_wan_uptime_ratio_24h` | `wan` | From the existing 10s ISP poll |
+| `unifi_wan_issue` | `wan`, `type` (`packet_loss`/`high_latency`/`downtime`) | UniFi cloud API internet issues |
+| `unifi_isp_info` | `isp`, `organization`, `asn`, `external_ip` | Always 1 |
+| `unifi_device_info` | `mac`, `name`, `type`, `model`, `version`, `ip` | Always 1 |
+| `unifi_device_up`, `unifi_device_state`, `unifi_device_uptime_seconds`, `unifi_device_cpu_ratio`, `unifi_device_mem_ratio`, `unifi_device_load1`, `unifi_device_temperature_celsius`, `unifi_device_clients` | `mac`, `name`, `type`, `model` | Only emitted when the model reports the value |
+| `unifi_device_transmit_bytes_total`, `unifi_device_receive_bytes_total` | `mac`, `name`, `type`, `model` | Counters, so use `rate()`. For the gateway these are WAN upload/download |
+| `unifi_clients` | `connection` (`wired`/`wireless`), `network` | Client counts |
+| `unifi_client_info` | `mac`, `name`, `network`, `connection`, `ip`, `essid`, `uplink`, `guest` | Per client (`metrics.perClient`) |
+| `unifi_client_signal_dbm`, `unifi_client_uptime_seconds`, `unifi_client_transmit_bytes_total`, `unifi_client_receive_bytes_total` | `mac`, `name`, `network`, `connection` | Per client (`metrics.perClient`) |
+| `unifi_exporter_poll_success`, `unifi_exporter_poll_duration_seconds`, `unifi_exporter_last_success_timestamp_seconds` | `source` | Health of every backend poll loop |
+| `unifi_exporter_process_*`, `unifi_exporter_nodejs_*` | | Node.js process metrics |
 
 ## Uninstalling
 

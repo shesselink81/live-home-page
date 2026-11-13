@@ -66,6 +66,28 @@ export interface Device {
   uplinkMac: string | null
   uplinkPortIdx: number | null
   switchDepth: number
+  // Extra fields used by the Prometheus exporter (collectors/metrics.ts).
+  // All optional on the controller side — null when a model doesn't report them.
+  numClients: number | null
+  temperatureC: number | null
+  loadAvg1: number | null
+}
+
+export interface Client {
+  mac: string
+  ip: string
+  name: string | null
+  hostname: string | null
+  isWired: boolean
+  isGuest: boolean
+  network: string | null
+  essid: string | null
+  signal: number | null
+  uptime: number | null
+  txBytes: number | null
+  rxBytes: number | null
+  apMac: string | null
+  swMac: string | null
 }
 
 export interface IspInfo {
@@ -118,6 +140,46 @@ function mapDevice(r: Record<string, unknown>): Device {
     uplinkMac: uplink?.uplink_mac ?? (r.uplink_mac as string | undefined) ?? null,
     uplinkPortIdx: uplink?.port_idx ?? null,
     switchDepth: (r.switch_depth as number | undefined) ?? 0,
+    numClients: num(r.num_sta),
+    temperatureC: deviceTemperature(r),
+    loadAvg1: num((r.sys_stats as { loadavg_1?: unknown } | undefined)?.loadavg_1),
+  }
+}
+
+function num(v: unknown): number | null {
+  if (v == null || v === '') return null
+  const n = typeof v === 'number' ? v : parseFloat(String(v))
+  return Number.isFinite(n) ? n : null
+}
+
+// Gateways/switches report either a single general_temperature or a
+// temperatures[] array (CPU/PHY/board sensors) — take the hottest sensor.
+function deviceTemperature(r: Record<string, unknown>): number | null {
+  const general = num(r.general_temperature)
+  const list = Array.isArray(r.temperatures)
+    ? (r.temperatures as Array<{ value?: unknown }>).map((t) => num(t.value)).filter((v): v is number => v != null)
+    : []
+  if (list.length) return Math.max(...list, general ?? -Infinity)
+  return general
+}
+
+function mapClient(r: Record<string, unknown>): Client {
+  return {
+    mac: r.mac as string,
+    ip: (r.ip as string | undefined) ?? '',
+    name: (r.name as string | undefined) ?? null,
+    hostname: (r.hostname as string | undefined) ?? null,
+    isWired: Boolean(r.is_wired),
+    isGuest: Boolean(r.is_guest),
+    network: (r.network as string | undefined) ?? null,
+    essid: (r.essid as string | undefined) ?? null,
+    signal: num(r.signal),
+    uptime: num(r.uptime),
+    // wired clients report wired-tx_bytes / wired-rx_bytes instead
+    txBytes: num(r.tx_bytes ?? r['wired-tx_bytes']),
+    rxBytes: num(r.rx_bytes ?? r['wired-rx_bytes']),
+    apMac: (r.ap_mac as string | undefined) ?? null,
+    swMac: (r.sw_mac as string | undefined) ?? null,
   }
 }
 
@@ -126,6 +188,11 @@ const GATEWAY_TYPES = new Set(['udm', 'ugw', 'uxg'])
 export async function getDevices(): Promise<Device[]> {
   const raw = await localGet('/api/s/default/stat/device') as Record<string, unknown>[]
   return raw.map(mapDevice)
+}
+
+export async function getClients(): Promise<Client[]> {
+  const raw = await localGet('/api/s/default/stat/sta') as Record<string, unknown>[]
+  return raw.map(mapClient)
 }
 
 export async function getGateway(): Promise<Device | null> {
