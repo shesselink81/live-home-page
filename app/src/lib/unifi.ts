@@ -3,8 +3,6 @@ import https from 'node:https'
 
 const LOCAL_BASE = process.env.UNIFI_LOCAL_URL ?? 'https://192.168.178.1/proxy/network'
 const LOCAL_KEY = process.env.UNIFI_LOCAL_API_KEY ?? ''
-const CLOUD_BASE = process.env.UNIFI_CLOUD_URL ?? 'https://api.ui.com'
-const CLOUD_KEY = process.env.UNIFI_CLOUD_API_KEY ?? ''
 
 // Set UNIFI_LOCAL_CA to the path of your controller's CA cert (PEM) for proper TLS verification.
 // Without it, verification is disabled — acceptable on a private LAN but not ideal.
@@ -39,15 +37,6 @@ function localRequest(path: string): Promise<unknown[]> {
 
 async function localGet(path: string) {
   return localRequest(path)
-}
-
-async function cloudGet(path: string) {
-  const res = await fetch(`${CLOUD_BASE}${path}`, {
-    headers: { 'X-API-KEY': CLOUD_KEY, Accept: 'application/json' },
-    cache: 'no-store',
-  })
-  if (!res.ok) throw new Error(`UniFi cloud ${path} → ${res.status}`)
-  return res.json()
 }
 
 export interface Device {
@@ -109,9 +98,7 @@ export interface WanHealth {
   // uptime%/issue detection); falls back to the cloud's wanDowntime flag
   // only when local health couldn't be reached this poll.
   wanUp: boolean
-  // Rolling uptime % computed from our own poll history (see history.ts) —
-  // getWanHealth() can't compute this itself (no history access), so it's
-  // always overridden by the ISP collector after calling this function.
+  // Rolling uptime % computed by the backend from its own poll history.
   wanUptimePercent24h: number | null
   wanUptimeWindowMs: number
   latencyAvgMs: number | null
@@ -206,58 +193,4 @@ export async function getClients(): Promise<Client[]> {
 export async function getNetworks(): Promise<NetworkConf[]> {
   const raw = await localGet('/api/s/default/rest/networkconf') as Record<string, unknown>[]
   return raw.map(mapNetwork).filter((n) => n.enabled)
-}
-
-interface LocalHealthEntry {
-  subsystem: string
-  status?: string
-  latency?: number
-  uptime?: number
-}
-
-export async function getWanHealth(): Promise<WanHealth | null> {
-  const [cloudBody, localHealth] = await Promise.allSettled([
-    cloudGet('/v1/sites'),
-    localGet('/api/s/default/stat/health'),
-  ])
-
-  if (cloudBody.status === 'rejected') throw cloudBody.reason
-
-  const sites: Record<string, unknown>[] = (cloudBody.value as { data?: [] }).data ?? []
-  const site = sites[0] as {
-    statistics?: {
-      ispInfo?: IspInfo
-      percentages?: { wanUptime?: number; txRetry?: number }
-      internetIssues?: Array<{ highLatency?: boolean; packetLoss?: boolean; wanDowntime?: boolean; latencyAvgMs?: number; latencyMaxMs?: number }>
-      wans?: { WAN?: { externalIp?: string } }
-    }
-  }
-  const stats = site?.statistics
-  if (!stats) return null
-
-  const issues = (stats.internetIssues ?? []).filter(
-    (i) => i.highLatency || i.packetLoss || i.wanDowntime
-  )
-
-  // Prefer real-time latency from local health (always present); fall back to cloud issue data.
-  const wwwEntry = localHealth.status === 'fulfilled'
-    ? (localHealth.value as LocalHealthEntry[]).find((e) => e.subsystem === 'www')
-    : undefined
-  const latencyAvgMs = wwwEntry?.latency ?? stats.internetIssues?.find((i) => i.highLatency)?.latencyAvgMs ?? null
-  const latencyMaxMs = stats.internetIssues?.find((i) => i.highLatency)?.latencyMaxMs ?? null
-  const wanUp = wwwEntry?.status ? wwwEntry.status === 'ok' : !issues.some((i) => i.wanDowntime)
-
-  return {
-    isp: stats.ispInfo ?? { asn: 0, name: 'Unknown', organization: 'Unknown' },
-    externalIp: stats.wans?.WAN?.externalIp ?? '',
-    wanUptime: stats.percentages?.wanUptime ?? 0,
-    wanUptimeSeconds: wwwEntry?.uptime ?? null,
-    wanUp,
-    wanUptimePercent24h: null, // overridden by the ISP collector
-    wanUptimeWindowMs: 0, // overridden by the ISP collector
-    txRetryPct: stats.percentages?.txRetry ?? null,
-    latencyAvgMs,
-    latencyMaxMs,
-    issues,
-  }
 }
