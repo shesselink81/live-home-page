@@ -134,6 +134,32 @@ metrics:
     # e.g. grafana_folder: UniFi (with sidecar.dashboards.folderAnnotation set)
     annotations: {}
 
+  # Prometheus Operator PrometheusRule with UniFi alerts (WAN down/latency/
+  # packet loss/uptime, device down/CPU/memory/load/temperature/reboot,
+  # exporter health). See README "Alert rules". Requires the
+  # monitoring.coreos.com CRDs.
+  prometheusRule:
+    enabled: false
+    # Defaults to the release namespace.
+    namespace: ""
+    # Labels on the PrometheusRule object — must match your Prometheus'
+    # ruleSelector (kube-prometheus-stack default: release: <helm release>).
+    labels: {}
+    # Extra labels added to every alert (e.g. for Alertmanager routing).
+    alertLabels: {}
+    thresholds:
+      wanLatencyMs: 100       # 5-min average, for 10m
+      wanUptimeRatio: 0.99    # rolling 24h
+      deviceCpuRatio: 0.9     # 5-min average, for 15m
+      deviceMemRatio: 0.9     # for 15m
+      deviceLoad1: 4          # 5-min average of load1, for 15m
+      deviceTemperatureC: 80  # hottest sensor, for 10m
+    # Alert names to leave out, e.g. [UnifiDeviceRebooted]
+    disabled: []
+    # Additional rules (standard Prometheus rule objects), rendered as their
+    # own "unifi-extra" group.
+    extraRules: []
+
 # MariaDB storing the backend's metric/chart history. Bundled as a
 # single-replica Deployment + PVC by default (mirrors docker-compose.yaml's
 # `db` service — no clustering, so a full StatefulSet isn't needed for one

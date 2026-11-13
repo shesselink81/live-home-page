@@ -83,6 +83,13 @@ kubectl port-forward svc/live-home-page 4000:4000
 | `metrics.grafanaDashboard.namespace` | `""` | ConfigMap namespace; defaults to the release namespace (set it to Grafana's namespace if the sidecar doesn't search all namespaces) |
 | `metrics.grafanaDashboard.labels` | `grafana_dashboard: "1"` | Labels the Grafana sidecar selects on |
 | `metrics.grafanaDashboard.annotations` | `{}` | e.g. `grafana_folder: UniFi` (with the sidecar's `folderAnnotation` set) |
+| `metrics.prometheusRule.enabled` | `false` | Create a `PrometheusRule` with UniFi alerts. See [Alert rules](#alert-rules) |
+| `metrics.prometheusRule.namespace` | `""` | PrometheusRule namespace; defaults to the release namespace |
+| `metrics.prometheusRule.labels` | `{}` | Labels on the PrometheusRule object; must match your Prometheus' `ruleSelector` (kube-prometheus-stack: `release: <release>`) |
+| `metrics.prometheusRule.alertLabels` | `{}` | Extra labels on every alert, e.g. for Alertmanager routing |
+| `metrics.prometheusRule.thresholds.*` | see values.yaml | `wanLatencyMs` 100, `wanUptimeRatio` 0.99, `deviceCpuRatio` 0.9, `deviceMemRatio` 0.9, `deviceLoad1` 4, `deviceTemperatureC` 80 |
+| `metrics.prometheusRule.disabled` | `[]` | Alert names to leave out, e.g. `[UnifiDeviceRebooted]` |
+| `metrics.prometheusRule.extraRules` | `[]` | Extra Prometheus rules, rendered as a `unifi-extra` group |
 | `db.enabled` | `true` | Bundle a single-replica MariaDB Deployment + PVC. Set `false` to use an external server via `db.host` |
 | `db.host` | `""` | External MariaDB/MySQL host; only used when `db.enabled: false` |
 | `db.port` | `3306` | DB port |
@@ -261,6 +268,39 @@ filters.
 | `unifi_client_signal_dbm`, `unifi_client_uptime_seconds`, `unifi_client_transmit_bytes_total`, `unifi_client_receive_bytes_total` | `mac`, `name`, `network`, `connection` | Per client (`metrics.perClient`) |
 | `unifi_exporter_poll_success`, `unifi_exporter_poll_duration_seconds`, `unifi_exporter_last_success_timestamp_seconds` | `source` | Health of every backend poll loop |
 | `unifi_exporter_process_*`, `unifi_exporter_nodejs_*` | | Node.js process metrics |
+
+### Alert rules
+
+`metrics.prometheusRule.enabled=true` (together with `metrics.enabled`)
+creates a `PrometheusRule`. kube-prometheus-stack only loads rules whose
+labels match its `ruleSelector`, usually `release: <your prometheus release>`:
+
+```sh
+--set metrics.prometheusRule.enabled=true \
+--set metrics.prometheusRule.labels.release=prometheus
+```
+
+| Alert | Fires when | for | Severity |
+|---|---|---|---|
+| `UnifiWanDown` | Controller reports the WAN down | 2m | critical |
+| `UnifiWanHighLatency` | 5-min average WAN latency > `wanLatencyMs` (100 ms) | 10m | warning |
+| `UnifiWanPacketLoss` | UniFi cloud API reports packet loss in the last 15 min | 5m | warning |
+| `UnifiWanUptimeLow` | Rolling 24h WAN uptime < `wanUptimeRatio` (99%) | 15m | warning |
+| `UnifiGatewayDown` | Gateway not in the connected state | 2m | critical |
+| `UnifiDeviceDown` | AP/switch not in the connected state | 5m | warning |
+| `UnifiDeviceHighCpu` | 5-min average CPU > `deviceCpuRatio` (90%) | 15m | warning |
+| `UnifiDeviceHighMemory` | Memory > `deviceMemRatio` (90%) | 15m | warning |
+| `UnifiDeviceHighLoad` | 5-min average load1 > `deviceLoad1` (4) | 15m | warning |
+| `UnifiDeviceHighTemperature` | Hottest sensor > `deviceTemperatureC` (80 °C) | 10m | warning |
+| `UnifiDeviceRebooted` | Device uptime < 10 min | – | info |
+| `UnifiExporterDown` | Backend `/metrics` target down or missing | 5m | warning |
+| `UnifiPollFailing` | Backend's ISP or UniFi device/client poll failing | 10m | warning |
+
+The CPU and load alerts use 5-minute averages held for 15 minutes, so short
+spikes don't fire them. A UCG Ultra briefly reaching about 87% CPU or a load
+of about 4 is normal. Every alert has `summary`, `description` and
+`dashboard_url` annotations. The "UniFi Overview" dashboard has an Alerts row
+at the top that lists firing and pending `Unifi*` alerts.
 
 ## Uninstalling
 
