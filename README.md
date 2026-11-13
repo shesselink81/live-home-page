@@ -9,7 +9,7 @@ Live Monitoring App with Unifi Network, HA and K8s monitoring
 | Component | Description | Port |
 |-----------|-------------|------|
 | **monitor** | Next.js dashboard (UniFi health, live Kubernetes/Docker/GitHub/Home Assistant data, optional SSO) | 4000 |
-| **backend** | Polls ISP/Kubernetes/Home Assistant/Docker on its own timers — independent of any open browser tab — and persists history to MariaDB. Internal-only, never exposed outside the compose/cluster network | 4100 (internal) |
+| **backend** | Polls ISP/Kubernetes/Home Assistant/Docker/Cloudflare on its own timers — independent of any open browser tab — and persists history to MariaDB. Optionally serves UniFi metrics in Prometheus format on `/metrics`. Internal-only, never exposed outside the compose/cluster network | 4100 (internal) |
 | **db** | MariaDB storing the backend's metric/chart history, so it survives restarts and redeploys. Internal-only | 3306 (internal) |
 
 ## Features
@@ -25,6 +25,7 @@ Four auto-refreshing tabs, all in one single-page dashboard:
 
 - WAN/ISP health — ISP name, uptime %, latency, active issues
 - Infrastructure devices — gateway/switch/AP status, firmware, TX/RX, CPU + memory usage bars
+- Networks — configured LAN/Guest/VLAN-only/VPN networks with VLAN ID and subnet
 - Active clients — name, IP, VLAN, connection type, signal, TX/RX
 - ISP history charts — latency (avg + rolling max) and WAN uptime over the last ~2 hours
 - Gateway history charts — WAN upload/download throughput and gateway CPU/memory % over the last ~2 hours
@@ -35,11 +36,12 @@ Live tree view: Internet → gateway → switches/APs → clients.
 
 ### Platforms Monitor
 
-Three sub-tabs — Kubernetes, Home Assistant, Docker — each pulling live data through the **backend** service (see [Installation step 3](#3-optional-live-platforms-monitor-tab)), independently of any browser tab being open. Every source degrades independently to "not reachable" if its upstream isn't configured or reachable — the rest of the tab keeps working. History is persisted to MariaDB, so charts survive a container restart or redeploy instead of resetting to empty.
+Four sub-tabs — Kubernetes, Home Assistant, Docker, Cloudflare — each pulling live data through the **backend** service (see [Installation step 3](#3-optional-live-platforms-monitor-tab)), independently of any browser tab being open. Every source degrades independently to "not reachable" if its upstream isn't configured or reachable — the rest of the tab keeps working. History is persisted to MariaDB, so charts survive a container restart or redeploy instead of resetting to empty.
 
 - **Kubernetes** — node CPU/memory table *and* rolling charts, pods not in a healthy state, Flux sources (`GitRepository`/`HelmRepository`), Flux Helm releases with parsed chart/version and Ready status
 - **Home Assistant** — system status (Core/OS/Supervisor/Docker versions, disk usage, pending updates) with a rolling CPU/memory chart for the host, backup status (manager state, last/next scheduled backup), your self-installed integrations (version + up-to-date status, cross-referenced against HACS), installed HACS plugins, and Supervisor add-ons (HAOS/Supervised installs only)
 - **Docker** — host info (version, OS, CPU count, memory) with a rolling host CPU/memory chart, and a live container table (name, image, state, uptime, ports) for a Docker host. Read through a `docker-socket-proxy` (Tecnativa) — the backend never talks to the Docker socket directly
+- **Cloudflare** — request/visit/bandwidth totals per zone, hourly traffic charts, and breakdowns by HTTP status, cache status, country, device type, host and path for every zone the API token can see (auto-discovered, no account/zone ID needed). Talks to the Cloudflare REST + GraphQL Analytics APIs directly — no MCP server
 
 ### Cross-cutting
 
@@ -48,12 +50,14 @@ Three sub-tabs — Kubernetes, Home Assistant, Docker — each pulling live data
 - **Optional `DASHBOARD_TOKEN`** — bearer-token protection for `/api/*`, independent of SSO (meant for scripts/automation, not browser use). Still works as a bypass for API callers even when SSO is enabled.
 - **Customizable branding** — `APP_TITLE` overrides the dashboard header and browser tab title (default: "Used IT Tech @ Home").
 - **Persistent history** — ISP/gateway and Platforms Monitor chart history is stored in MariaDB by the **backend** service, surviving container restarts and redeploys instead of resetting to empty.
+- **Optional Prometheus metrics, Grafana dashboard and alert rules** — the backend can export UniFi WAN/ISP, device and client metrics on `/metrics`; the Helm chart ships a matching ServiceMonitor, a "UniFi Overview" Grafana dashboard and PrometheusRule alerts (WAN down/latency/packet loss, device down/CPU/memory/load/temperature, exporter health). See [step 6](#6-optional-prometheus-metrics).
 
 ## Requirements
 
 - Docker with Compose v2
 - A UniFi console/controller reachable on your network
 - A UniFi local API key (optionally also a cloud API key, for `api.ui.com` metrics)
+- Optional: a Cloudflare API token (Zone → Analytics → Read, Zone → Zone → Read) for the Cloudflare sub-tab
 
 ## Installation (Docker Compose)
 
@@ -94,7 +98,7 @@ ALLOWED_NETWORKS=192.168.1.0/24,172.16.0.0/12
 
 ### 3. Optional: live Platforms Monitor tab
 
-The Platforms Monitor tab can show live Kubernetes, Home Assistant, and Docker data (plus GitHub on the Home tab), each read by the **backend** service from its own upstream — see [`docker-compose.mcp.yaml`](./docker-compose.mcp.yaml) (meant to run as a dedicated stack, e.g. on a separate docker host) for `kubernetes-mcp-server`, `ha-mcp`, `github-mcp-server`, and `docker-socket-proxy`. Point the app at them:
+The Platforms Monitor tab can show live Kubernetes, Home Assistant, and Docker data (plus GitHub on the Home tab), each read by the **backend** service from its own upstream. [`docker-compose.mcp.yaml`](./docker-compose.mcp.yaml) is an optional, dedicated stack (typically run on a separate docker host) with `docker-socket-proxy`, `ha-mcp` and two UniFi MCP servers (`unifi-mcp` for the local API, `unifi-mcp-cloud` for the cloud API, published on loopback ports 3000/3001). `kubernetes-mcp-server` and `github-mcp-server` are included but commented out. Point the app at them:
 
 ```env
 MCP_HOST=host.docker.internal
@@ -102,9 +106,12 @@ MCP_GITHUB_TOKEN=your-github-pat
 HOMEASSISTANT_URL=https://your-home-assistant-url
 HOMEASSISTANT_TOKEN=your-home-assistant-long-lived-token
 KUBECONFIG_PATH=./kubeconfig
+CLOUDFLARE_API_TOKEN=your-cloudflare-api-token
+# Required by the UniFi MCP servers in docker-compose.mcp.yaml (clients send it as a Bearer token)
+MCP_AUTH_TOKEN=a-random-token
 ```
 
-`MCP_HOST` is used to build `MCP_KUBERNETES_URL`/`MCP_GITHUB_URL`/`MCP_HOMEASSISTANT_URL`/`DOCKER_API_URL` automatically; set any of them individually only if that source lives somewhere other than `MCP_HOST`. The Docker section talks to the Docker Engine remote API through `docker-socket-proxy` (Tecnativa, also defined in `docker-compose.mcp.yaml`) rather than the Docker socket directly — `DOCKER_API_URL` should point at that proxy's `tcp://host:port`, not at Docker itself. Everything else in the app works fine without any of this — the tab just shows "not reachable" per source until it's configured.
+`MCP_HOST` is used to build `MCP_KUBERNETES_URL`/`MCP_GITHUB_URL`/`MCP_HOMEASSISTANT_URL`/`DOCKER_API_URL` automatically; set any of them individually only if that source lives somewhere other than `MCP_HOST`. The Docker section talks to the Docker Engine remote API through `docker-socket-proxy` (Tecnativa, also defined in `docker-compose.mcp.yaml`) rather than the Docker socket directly — `DOCKER_API_URL` should point at that proxy's `tcp://host:port`, not at Docker itself. The Cloudflare sub-tab needs only `CLOUDFLARE_API_TOKEN` — no host or MCP server. The UniFi MCP servers read `UNIFI_LOCAL_API_KEY`, `UNIFI_CLOUD_API_KEY`, `UNIFI_LOCAL_IP` and `MCP_AUTH_TOKEN` from `.env`; never put keys directly in the compose file. Everything else in the app works fine without any of this — the tab just shows "not reachable" per source until it's configured.
 
 ### 4. Optional: Home tab links
 
@@ -145,13 +152,16 @@ mapping for 4100 to the `backend` service. A ready-made Grafana dashboard is
 at `helm/live-home-page/dashboards/unifi-overview.json`: import it in Grafana
 and pick your Prometheus data source. See
 [Prometheus & Grafana](helm/live-home-page/README.md#prometheus--grafana) for
-the list of metrics.
+the list of metrics. On Kubernetes the chart can also install alert rules
+(`metrics.prometheusRule.*`), see
+[Alert rules](helm/live-home-page/README.md#alert-rules).
 
 ### 7. Run
 
 ```sh
-## Start MCP Servers local
+# Optional: the MCP stack from step 3 (usually on a separate docker host)
 docker compose -f docker-compose.mcp.yaml up -d
+
 docker compose up -d
 ```
 
@@ -171,11 +181,12 @@ Configured in `.mcp.json` (see `.mcp.json.example` for a template). Enable via `
 
 | Server | Type | Purpose |
 |--------|------|---------|
-| `unifi Local` | stdio | UniFi local-controller tools — devices, clients, firewall, DNS, WiFi, … |
 | `unifi Cloud` | stdio | UniFi cloud API tools — `get_isp_metrics`, `list_sites`, `get_site_health_summary` |
-| `Home Assistant` | http | Home Assistant tools — same server the Platforms Monitor tab uses |
-| `kubernetes` | http | Kubernetes cluster tools — same server the Platforms Monitor tab uses |
-| `github` | http | GitHub repository tools — same server the Home tab uses |
+| `unifi-network` | http (`:8088/mcp`) | UniFi local-controller tools — devices, clients, firewall, DNS, WiFi, … |
+| `home-assistant` | http (`:8086/mcp`) | Home Assistant tools — same `ha-mcp` server the Platforms Monitor tab uses |
+| `kubernetes` | http (`:8087/mcp`) | Kubernetes cluster tools (`kubernetes-mcp-server`) |
+| `github-local` | http (`:8082/mcp`) | GitHub repository tools (`github-mcp-server`, authenticated with `MCP_GITHUB_TOKEN`) |
+| `cloudflare-api` | http (`mcp.cloudflare.com`) | Cloudflare API tools |
 
 ## Helm repository
 
@@ -233,9 +244,9 @@ helm upgrade live-home-page ./helm/live-home-page \
   --set httpRoute.hostnames[0]=unifi.example.com
 ```
 
-Use `existingSecret` to supply API keys from a pre-created Secret (keys: `local-api-key`, `cloud-api-key`, `db-password`, plus `dashboard-token`/`mcp-github-token`/`sso-client-secret`/`sso-auth-secret` for the optional features above).
+Use `existingSecret` to supply API keys from a pre-created Secret (keys: `local-api-key`, `cloud-api-key`, `db-password`, plus `dashboard-token`/`mcp-github-token`/`cloudflare-api-token`/`sso-client-secret`/`sso-auth-secret` for the optional features above).
 
-The chart mirrors every env var described in this README as a `values.yaml` field — see the comments in `helm/live-home-page/values.yaml` for the full list (`appTitle`, `mcp.*`, `backend.*`, `db.*`, `network.allowedNetworks`, `homeLinks.links`, `sso.*`). It can also attach existing Traefik `Middleware` CRDs to the exposed route via `traefik.middlewares` — see [Attaching Traefik middleware](./helm/live-home-page/README.md#attaching-traefik-middleware) in the chart README.
+The chart mirrors every env var described in this README as a `values.yaml` field — see the comments in `helm/live-home-page/values.yaml` for the full list (`appTitle`, `mcp.*`, `cloudflare.*`, `backend.*`, `db.*`, `metrics.*`, `network.allowedNetworks`, `homeLinks.links`, `sso.*`). It can also attach existing Traefik `Middleware` CRDs to the exposed route via `traefik.middlewares` — see [Attaching Traefik middleware](./helm/live-home-page/README.md#attaching-traefik-middleware) in the chart README.
 
 ## Project structure
 
@@ -249,16 +260,20 @@ The chart mirrors every env var described in this README as a `values.yaml` fiel
 │   ├── Dockerfile           # Production image (multi-stage, standalone build)
 │   ├── Dockerfile.dev       # Dev image (hot-reload)
 │   └── .env.local           # Local env for running app/ directly, not via Docker (not committed)
-├── backend/                 # Polling + history service — ISP/Kubernetes/Home Assistant/Docker, MariaDB-backed
+├── backend/                 # Polling + history service — ISP/Kubernetes/Home Assistant/Docker/Cloudflare, MariaDB-backed
 │   └── src/
-│       ├── collectors/      # One fetch-and-persist function per source
+│       ├── collectors/      # One fetch-and-persist function per source (isp, kubernetes, homeassistant, docker, cloudflare, metrics)
+│       ├── metrics.ts       # Prometheus exporter (/metrics, METRICS_ENABLED)
 │       ├── poller.ts        # Timers driving the collectors independently of any browser tab
 │       └── server.ts        # Express — serves the latest cached snapshot + history to the frontend
-├── helm/live-home-page/     # Helm chart for Kubernetes (monitor + backend + db)
+├── helm/live-home-page/     # Helm chart for Kubernetes (monitor + backend + db, optional ServiceMonitor/dashboard/alerts)
+│   └── dashboards/          # Grafana "UniFi Overview" dashboard JSON
+├── scripts/                 # Helpers: UniFi backup download, Cloudflare home-IP updater
+├── config/                  # kubernetes-mcp-server config
 ├── screenshots/             # Dashboard screenshots used in this README
 ├── docker-compose.yaml      # monitor + backend + db, production
 ├── docker-compose.dev.yaml  # monitor + backend + db, dev with hot-reload
-├── docker-compose.mcp.yaml  # Optional: MCP servers + docker-socket-proxy for the Platforms Monitor tab
+├── docker-compose.mcp.yaml  # Optional: MCP servers (ha-mcp, UniFi local/cloud) + docker-socket-proxy
 ├── .mcp.json                # Claude Code MCP config (not committed)
 ├── .env.example             # Template — copy to .env and fill in
 └── .env                     # API keys and config (not committed)
